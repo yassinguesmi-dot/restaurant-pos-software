@@ -5,13 +5,6 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
-# Import existing backend
-try:
-    from src.database import Database
-except ImportError:
-    # Fallback if imports fail on Android
-    Database = None
-
 BASE_DIR = Path(__file__).resolve().parent
 KV_PATH = BASE_DIR / "ui" / "main.kv"
 
@@ -22,18 +15,18 @@ class LoginScreen(Screen):
         username = self.ids.username.text.strip()
         password = self.ids.password.text.strip()
         if not username or not password:
-            self.ids.status.text = "Veuillez saisir vos identifiants"
+            self.ids.status.text = "Please enter credentials"
             return
-        # Use verify_user_credentials instead of authenticate_user
-        user = app.db.verify_user_credentials(username, password)
-        if user:
-            app.current_user = dict(user)
+        
+        # Simple hardcoded auth for mobile version
+        if username == "admin" and password == "admin":
+            app.current_user = {"username": username, "role": "admin"}
             self.ids.status.text = ""
             self.ids.username.text = ""
             self.ids.password.text = ""
             app.switch_to("home")
         else:
-            self.ids.status.text = "Identifiants invalides"
+            self.ids.status.text = "Invalid credentials"
 
 
 class HomeScreen(Screen):
@@ -75,11 +68,6 @@ class TablesScreen(Screen):
 class Cafe216App(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        try:
-            self.db = Database()
-        except Exception as e:
-            print(f"Database error: {e}")
-            self.db = None
         self.current_user = None
 
     def build(self):
