@@ -7,11 +7,9 @@ from src.screens.login_screen import LoginDialog
 def main():
     app = QApplication(sys.argv)
     db = Database()
-
     login = LoginDialog(db)
     if login.exec_() != login.Accepted:
         sys.exit(0)
-
     window = MainWindow(db, login.authenticated_user)
     window.show()
     sys.exit(app.exec_())

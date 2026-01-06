@@ -579,7 +579,6 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM users WHERE is_active = 1')
         return cursor.fetchall()
-
     def get_user(self, user_id):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
