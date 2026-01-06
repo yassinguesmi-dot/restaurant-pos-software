@@ -1,0 +1,46 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install buildozer cython
+        sudo apt-get update
+        sudo apt-get install -y build-essential git openjdk-11-jdk-headless android-sdk-build-tools
+    
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+    
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: cafe216-apk
+        path: bin/*.apk
+        retention-days: 30
+    
+    - name: Create Release
+      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: bin/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

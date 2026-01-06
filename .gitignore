@@ -1,0 +1,15 @@
+*.pyc
+__pycache__/
+*.db
+*.db-journal
+.buildozer/
+bin/
+build/
+dist/
+*.egg-info/
+.venv/
+.env
+.DS_Store
+logs/
+*.log
+*.spec
