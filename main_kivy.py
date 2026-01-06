@@ -5,10 +5,12 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
-# Import existing backend (adjust paths as needed)
-from src.database import Database
-
-# Optional: add other services/helpers from src here
+# Import existing backend
+try:
+    from src.database import Database
+except ImportError:
+    # Fallback if imports fail on Android
+    Database = None
 
 BASE_DIR = Path(__file__).resolve().parent
 KV_PATH = BASE_DIR / "ui" / "main.kv"
@@ -73,7 +75,11 @@ class TablesScreen(Screen):
 class Cafe216App(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.db = Database()
+        try:
+            self.db = Database()
+        except Exception as e:
+            print(f"Database error: {e}")
+            self.db = None
         self.current_user = None
 
     def build(self):
