@@ -12,4 +12,5 @@ dist/
 .DS_Store
 logs/
 *.log
-*.spec
+Cafe216_POS.spec
+main_kivy.spec
