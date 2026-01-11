@@ -1,0 +1,14 @@
+# Mobile APK Build Requirements
+# For use with Buildozer/python-for-android
+
+# Core Python version managed by p4a
+# python3
+
+# Kivy - UI Framework
+kivy==2.2.0
+
+# Image processing for Kivy
+pillow
+
+# Optional: If you need database support on mobile
+# pysqlite3

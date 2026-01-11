@@ -5,42 +5,122 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
     
-    - name: Set up Python
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    - name: Cache Buildozer global directory
+      uses: actions/cache@v3
+      with:
+        path: ~/.buildozer
+        key: ${{ runner.os }}-buildozer-global-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          ${{ runner.os }}-buildozer-global-
+    
+    - name: Cache Buildozer local directory
+      uses: actions/cache@v3
+      with:
+        path: .buildozer
+        key: ${{ runner.os }}-buildozer-local-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          ${{ runner.os }}-buildozer-local-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          git \
+          ffmpeg \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev \
+          libsdl2-ttf-dev \
+          libportmidi-dev \
+          libswscale-dev \
+          libavformat-dev \
+          libavcodec-dev \
+          zlib1g-dev \
+          libgstreamer1.0-dev \
+          gstreamer1.0-plugins-base \
+          gstreamer1.0-plugins-good \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          autoconf \
+          libtool \
+          pkg-config
+    
+    - name: Install Python build tools
       run: |
         python -m pip install --upgrade pip
-        pip install buildozer cython
-        sudo apt-get update
-        sudo apt-get install -y build-essential git openjdk-11-jdk-headless android-sdk-build-tools
+        pip install --upgrade buildozer cython
     
-    - name: Build APK
+    - name: Accept Android SDK licenses
       run: |
-        buildozer -v android debug
+        mkdir -p ~/.buildozer/android/platform
+        echo "Accepting SDK licenses..."
+    
+    - name: Build APK with Buildozer
+      run: |
+        yes | buildozer -v android debug
+      timeout-minutes: 90
+    
+    - name: List build outputs
+      if: always()
+      run: |
+        echo "Checking build directory..."
+        ls -lh bin/ || echo "No bin directory found"
+        echo "Build logs:"
+        cat .buildozer/logs/*.log || echo "No logs found"
     
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
+      if: success()
       with:
-        name: cafe216-apk
+        name: cafe216-pos-debug-apk
         path: bin/*.apk
         retention-days: 30
+        if-no-files-found: error
+    
+    - name: Upload build logs
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: build-logs
+        path: .buildozer/logs/*.log
+        retention-days: 7
+        if-no-files-found: warn
     
     - name: Create Release
-      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: bin/*.apk
+        body: |
+          ## Cafe216 POS - Android APK Release
+          
+          Download and install the APK on your Android device.
+          
+          **Installation:**
+          1. Download the APK file
+          2. Enable "Install from Unknown Sources" on your Android device
+          3. Open the APK file and install
+          
+          **Login Credentials:**
+          - Username: admin
+          - Password: admin
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

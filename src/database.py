@@ -676,6 +676,7 @@ class Database:
     def get_next_invoice_number(self):
         cursor = self.connection.cursor()
         prefix = self.get_setting('invoice_prefix', 'FAC')
+
         cursor.execute('''
             SELECT MAX(CAST(SUBSTR(invoice_number, LENGTH(?) + 1) AS INTEGER)) as max_num
             FROM orders
@@ -728,3 +729,121 @@ class Database:
     def close(self):
         if self.connection:
             self.connection.close()
+
+import kivy
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.image import Image
+from kivy.uix.filechooser import FileChooserIconView
+from kivy.uix.popup import Popup
+from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+
+from kivy.lang import Builder
+Builder.load_string('''
+<MainWidget>:
+    orientation: 'vertical'
+    padding: 10
+    spacing: 10
+
+    Image:
+        source: 'logo.png'
+        size_hint: (1, 0.3)
+        allow_stretch: True
+        keep_ratio: True
+
+    Label:
+        text: "Bienvenue dans l'application de gestion de café"
+        font_size: 24
+        halign: 'center'
+        size_hint: (1, 0.1)
+
+    Button:
+        text: "Commencer"
+        font_size: 18
+        size_hint: (1, 0.1)
+        on_press: app.show_login()
+
+    Label:
+        text: "Version 1.0 - Café 216"
+        font_size: 12
+        halign: 'center'
+        size_hint: (1, 0.1)
+
+    ''')
+class MainWidget(BoxLayout):
+    pass
+
+class LoginWidget(BoxLayout):
+    def __init__(self, **kwargs):
+        super(LoginWidget, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = 10
+        self.spacing = 10
+
+        with self.canvas.before:
+            Color(1, 1, 1, 1)  # Couleur de fond blanche
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+        self.bind(size=self._update_rect, pos=self._update_rect)
+
+        self.add_widget(Label(text="Connexion", font_size=24, size_hint_y=None, height=44))
+
+        self.username = TextInput(hint_text="Nom d'utilisateur", size_hint_y=None, height=44)
+        self.add_widget(self.username)
+
+        self.password = TextInput(hint_text="Mot de passe", size_hint_y=None, height=44, password=True)
+        self.add_widget(self.password)
+
+        self.login_button = Button(text="Se connecter", size_hint_y=None, height=44)
+        self.login_button.bind(on_press=self.login)
+        self.add_widget(self.login_button)
+
+        self.message = Label(text="", color=(1, 0, 0, 1), size_hint_y=None, height=44)
+        self.add_widget(self.message)
+
+    def _update_rect(self, instance, value):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
+
+    def login(self, instance):
+        username = self.username.text
+        password = self.password.text
+
+        if not username or not password:
+            self.message.text = "Veuillez entrer votre nom d'utilisateur et votre mot de passe."
+            return
+
+        # Vérifier les identifiants
+        db = Database()
+        user = db.verify_user_credentials(username, password)
+        db.close()
+
+        if user:
+            self.message.text = ""
+            App.get_running_app().show_main_menu(user)
+        else:
+            self.message.text = "Nom d'utilisateur ou mot de passe incorrect."
+
+class CafeApp(App):
+    def build(self):
+        Window.clearcolor = (1, 1, 1, 1)  # Fond blanc
+        return MainWidget()
+
+    def show_login(self):
+        self.root.clear_widgets()
+        self.root.add_widget(LoginWidget())
+
+    def show_main_menu(self, user):
+        self.root.clear_widgets()
+        # TODO: Ajouter le menu principal
+        self.root.add_widget(Label(text=f"Bienvenue, {user['full_name']}!", font_size=24))
+
+if __name__ == '__main__':
+    CafeApp().run()
+
+pip install kivy pillow
+
