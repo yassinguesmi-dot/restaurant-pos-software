@@ -21,7 +21,7 @@ source.include_exts = py,kv,png,jpg,jpeg,ttf,db
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = tests, bin, venv, build, dist, restaurant-pos-software
+source.exclude_dirs = tests, bin, venv, build, dist, .git, .github, __pycache__
 
 # (str) Application versioning (method 1)
 version = 1.0
