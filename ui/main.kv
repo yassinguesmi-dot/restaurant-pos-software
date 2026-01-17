@@ -1,9 +1,11 @@
 #:kivy 2.2.0
 #:import hex kivy.utils.get_color_from_hex
+#:import Window kivy.core.window.Window
+#:import dp kivy.metrics.dp
 
 <PrimaryButton@Button>:
-    size_hint_y: None
-    height: 48
+    size_hint: 1, None
+    height: max(dp(48), Window.height * 0.06)
     background_normal: ''
     background_color: 0, 0, 0, 0
     color: hex('F5E6D3FF')
@@ -28,8 +30,8 @@
     color: hex('F5E6D3FF')
     font_size: '18sp'
     bold: True
-    size_hint_y: None
-    height: 110
+    size_hint: 1, None
+    height: max(dp(100), Window.height * 0.18)
     canvas.before:
         Color:
             rgba: hex('1D1A24FF')
@@ -39,8 +41,8 @@
             radius: [14, 14, 14, 14]
 
 <GhostButton@Button>:
-    size_hint_y: None
-    height: 44
+    size_hint: 1, None
+    height: max(dp(44), Window.height * 0.055)
     background_normal: ''
     background_color: 0, 0, 0, 0
     color: hex('F5E6D3FF')
@@ -60,8 +62,8 @@
 
 <PanelCard@BoxLayout>:
     orientation: 'vertical'
-    padding: 18
-    spacing: 12
+    padding: dp(18)
+    spacing: dp(12)
     size_hint_y: None
     height: self.minimum_height
     canvas.before:
@@ -99,25 +101,25 @@
         padding: 24
         PanelCard:
             size_hint: 0.9, None
-            width: min(self.width, 480)
+            width: min(self.width * 0.9, dp(480))
             Label:
                 text: 'Café 216'
                 font_size: '26sp'
                 color: hex('F5E6D3FF')
                 size_hint_y: None
-                height: 40
+                height: max(dp(40), Window.height * 0.05)
             Label:
                 text: 'Connexion'
                 font_size: '18sp'
                 color: hex('B9A48EFF')
                 size_hint_y: None
-                height: 32
+                height: max(dp(32), Window.height * 0.04)
             TextInput:
                 id: username
                 hint_text: 'Utilisateur'
                 multiline: False
                 size_hint_y: None
-                height: 46
+                height: max(dp(46), Window.height * 0.06)
                 background_color: hex('FFFFFF12')
                 foreground_color: hex('F5E6D3FF')
                 cursor_color: hex('C27B52FF')
@@ -128,7 +130,7 @@
                 password: True
                 multiline: False
                 size_hint_y: None
-                height: 46
+                height: max(dp(46), Window.height * 0.06)
                 background_color: hex('FFFFFF12')
                 foreground_color: hex('F5E6D3FF')
                 cursor_color: hex('C27B52FF')
@@ -138,7 +140,7 @@
                 text: ''
                 color: 1,0.5,0.5,1
                 size_hint_y: None
-                height: 24
+                height: max(dp(24), Window.height * 0.03)
             PrimaryButton:
                 text: 'Se connecter'
                 on_press: root.do_login()
@@ -159,8 +161,8 @@
                 size: self.size
         BoxLayout:
             size_hint_y: None
-            height: 64
-            padding: 4
+            height: max(dp(64), Window.height * 0.08)
+            padding: dp(4)
             Label:
                 text: 'Tablette POS'
                 font_size: '22sp'
@@ -172,9 +174,9 @@
                 on_release: app.switch_to('login')
         GridLayout:
             cols: 2
-            spacing: 14
+            spacing: dp(14)
             size_hint_y: None
-            row_default_height: 120
+            row_default_height: max(dp(100), Window.height * 0.18)
             row_force_default: True
             height: self.minimum_height
             MainButton:

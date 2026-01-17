@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLa
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from datetime import datetime
+from src.utils.styles import ModernStyles
 
 class StockManagementScreen(QWidget):
     def __init__(self, db):
@@ -13,13 +14,21 @@ class StockManagementScreen(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
         
-        # Titre
-        title = QLabel("Gestion du Stock")
-        title.setFont(QFont("Arial", 18, QFont.Bold))
-        title.setStyleSheet("color: #2C2C2C;")
-        layout.addWidget(title)
+        # Header
+        header_layout = QVBoxLayout()
+        title = QLabel("📊 Gestion du Stock")
+        title.setFont(QFont("Arial", 22, QFont.Bold))
+        title.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        header_layout.addWidget(title)
+        
+        subtitle = QLabel("Suivez et gérez vos niveaux de stock")
+        subtitle.setFont(QFont("Arial", 12))
+        subtitle.setStyleSheet(f"color: {ModernStyles.TEXT_SECONDARY};")
+        header_layout.addWidget(subtitle)
+        layout.addLayout(header_layout)
         
         # Tabs
         tabs = QTabWidget()
@@ -45,39 +54,17 @@ class StockManagementScreen(QWidget):
         # Boutons d'action
         buttons_layout = QHBoxLayout()
         
-        add_stock_btn = QPushButton("+ Réapprovisionner")
+        add_stock_btn = QPushButton("📦 Réapprovisionner")
         add_stock_btn.setFixedHeight(40)
         add_stock_btn.setFont(QFont("Arial", 11, QFont.Bold))
-        add_stock_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 8px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        add_stock_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.SUCCESS))
         add_stock_btn.clicked.connect(self.add_stock)
         buttons_layout.addWidget(add_stock_btn)
         
         refresh_btn = QPushButton("🔄 Rafraîchir")
         refresh_btn.setFixedHeight(40)
         refresh_btn.setFont(QFont("Arial", 11))
-        refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #D4A574;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 8px;
-            }
-            QPushButton:hover {
-                background-color: #C49460;
-            }
-        """)
+        refresh_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.INFO))
         refresh_btn.clicked.connect(self.load_stock)
         buttons_layout.addWidget(refresh_btn)
         
@@ -88,19 +75,11 @@ class StockManagementScreen(QWidget):
         self.stock_table = QTableWidget()
         self.stock_table.setColumnCount(6)
         self.stock_table.setHorizontalHeaderLabels(["ID", "Produit", "Stock Actuel", "Stock Min", "Statut", "Actions"])
-        self.stock_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-                border: 1px solid #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-            }
-        """)
+        self.stock_table.setStyleSheet(ModernStyles.modern_table())
+        self.stock_table.setAlternatingRowColors(True)
+        self.stock_table.verticalHeader().setVisible(False)
+        self.stock_table.horizontalHeader().setStretchLastSection(True)
+        self.stock_table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.stock_table)
         
         self.load_stock()
@@ -117,19 +96,10 @@ class StockManagementScreen(QWidget):
         self.alerts_table = QTableWidget()
         self.alerts_table.setColumnCount(5)
         self.alerts_table.setHorizontalHeaderLabels(["ID", "Produit", "Stock Actuel", "Stock Min", "Actions"])
-        self.alerts_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-                border: 1px solid #DDD;
-            }
-            QHeaderView::section {
-                background-color: #FF5733;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-            }
-        """)
+        self.alerts_table.setStyleSheet(ModernStyles.modern_table())
+        self.alerts_table.setAlternatingRowColors(True)
+        self.alerts_table.verticalHeader().setVisible(False)
+        self.alerts_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.alerts_table)
         
         self.load_alerts()
@@ -157,19 +127,10 @@ class StockManagementScreen(QWidget):
         self.history_table = QTableWidget()
         self.history_table.setColumnCount(7)
         self.history_table.setHorizontalHeaderLabels(["Date", "Produit", "Type", "Quantité", "Avant", "Après", "Raison"])
-        self.history_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-                border: 1px solid #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-            }
-        """)
+        self.history_table.setStyleSheet(ModernStyles.modern_table())
+        self.history_table.setAlternatingRowColors(True)
+        self.history_table.verticalHeader().setVisible(False)
+        self.history_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.history_table)
         
         self.load_history()
@@ -209,19 +170,10 @@ class StockManagementScreen(QWidget):
             self.stock_table.setItem(i, 4, status_item)
             
             # Bouton ajuster
-            adjust_btn = QPushButton("Ajuster")
-            adjust_btn.setFixedWidth(80)
-            adjust_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #2196F3;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #1976D2;
-                }
-            """)
+            adjust_btn = QPushButton("⚙️ Ajuster")
+            adjust_btn.setFixedSize(120, 32)
+            adjust_btn.setFont(QFont("Segoe UI", 10, QFont.Bold))
+            adjust_btn.setStyleSheet(ModernStyles.table_button("edit"))
             adjust_btn.clicked.connect(lambda checked, p=product: self.adjust_stock(p))
             self.stock_table.setCellWidget(i, 5, adjust_btn)
 
@@ -242,19 +194,10 @@ class StockManagementScreen(QWidget):
             self.alerts_table.setItem(i, 3, QTableWidgetItem(str(min_stock)))
             
             # Bouton réapprovisionner
-            restock_btn = QPushButton("Réapprovisionner")
-            restock_btn.setFixedWidth(120)
-            restock_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #45a049;
-                }
-            """)
+            restock_btn = QPushButton("➕ Réapprovisionner")
+            restock_btn.setFixedSize(160, 32)
+            restock_btn.setFont(QFont("Segoe UI", 10, QFont.Bold))
+            restock_btn.setStyleSheet(ModernStyles.table_button("add"))
             restock_btn.clicked.connect(lambda checked, p=product: self.add_stock_for_product(p))
             self.alerts_table.setCellWidget(i, 4, restock_btn)
 
@@ -349,11 +292,12 @@ class AddStockDialog(QDialog):
         
         buttons_layout = QHBoxLayout()
         cancel_btn = QPushButton("Annuler")
+        cancel_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=False))
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("Enregistrer")
-        save_btn.setStyleSheet("background-color: #4CAF50; color: white;")
+        save_btn = QPushButton("✓ Enregistrer")
+        save_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=True))
         save_btn.clicked.connect(self.save)
         buttons_layout.addWidget(save_btn)
         
@@ -403,11 +347,12 @@ class AdjustStockDialog(QDialog):
         
         buttons_layout = QHBoxLayout()
         cancel_btn = QPushButton("Annuler")
+        cancel_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=False))
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("Enregistrer")
-        save_btn.setStyleSheet("background-color: #2196F3; color: white;")
+        save_btn = QPushButton("✓ Enregistrer")
+        save_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=True))
         save_btn.clicked.connect(self.save)
         buttons_layout.addWidget(save_btn)
         

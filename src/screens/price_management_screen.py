@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLa
                              QDoubleSpinBox, QComboBox, QMessageBox, QTabWidget, QSpinBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
+from src.utils.styles import ModernStyles
 
 class PriceManagementScreen(QWidget):
     def __init__(self, db):
@@ -41,38 +42,16 @@ class PriceManagementScreen(QWidget):
         buttons_layout = QHBoxLayout()
         
         add_btn = QPushButton("+ Ajouter un Produit")
-        add_btn.setFixedHeight(40)
+        add_btn.setMinimumHeight(44)
         add_btn.setFont(QFont("Arial", 11, QFont.Bold))
-        add_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #C8A882;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 8px;
-            }
-            QPushButton:hover {
-                background-color: #B8985F;
-            }
-        """)
+        add_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.SUCCESS))
         add_btn.clicked.connect(self.add_product)
         buttons_layout.addWidget(add_btn)
         
         refresh_btn = QPushButton("🔄 Rafraîchir")
-        refresh_btn.setFixedHeight(40)
+        refresh_btn.setMinimumHeight(44)
         refresh_btn.setFont(QFont("Arial", 11))
-        refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #D4A574;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                padding: 8px;
-            }
-            QPushButton:hover {
-                background-color: #C49460;
-            }
-        """)
+        refresh_btn.setStyleSheet(ModernStyles.modern_button_outline(ModernStyles.INFO))
         refresh_btn.clicked.connect(self.load_all_products)
         buttons_layout.addWidget(refresh_btn)
         
@@ -83,25 +62,18 @@ class PriceManagementScreen(QWidget):
         self.products_table = QTableWidget()
         self.products_table.setColumnCount(7)
         self.products_table.setHorizontalHeaderLabels(["ID", "Nom du Produit", "Prix (dt)", "Catégorie", "Stock", "Stock Min", "Actions"])
-        self.products_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-                border: 1px solid #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QTableWidget::item {
-                padding: 5px;
-            }
-        """)
+        self.products_table.setStyleSheet(ModernStyles.modern_table())
         self.products_table.horizontalHeader().setStretchLastSection(False)
+        self.products_table.verticalHeader().setDefaultSectionSize(48)
+        # sensible column widths
+        self.products_table.setColumnWidth(0, 60)
+        self.products_table.setColumnWidth(1, 320)
+        self.products_table.setColumnWidth(2, 120)
+        self.products_table.setColumnWidth(3, 140)
+        self.products_table.setColumnWidth(4, 80)
+        self.products_table.setColumnWidth(5, 90)
         layout.addWidget(self.products_table)
-        
+
         self.load_all_products()
         return widget
 
@@ -132,21 +104,10 @@ class PriceManagementScreen(QWidget):
         self.category_table = QTableWidget()
         self.category_table.setColumnCount(7)
         self.category_table.setHorizontalHeaderLabels(["ID", "Nom du Produit", "Prix (dt)", "Catégorie", "Stock", "Stock Min", "Actions"])
-        self.category_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-                border: 1px solid #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-            }
-        """)
+        self.category_table.setStyleSheet(ModernStyles.modern_table())
+        self.category_table.verticalHeader().setDefaultSectionSize(48)
         layout.addWidget(self.category_table)
-        
+
         self.load_category_products()
         return widget
 
@@ -176,32 +137,12 @@ class PriceManagementScreen(QWidget):
             
             edit_btn = QPushButton("✏️ Éditer")
             edit_btn.setFixedWidth(100)
-            edit_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #45a049;
-                }
-            """)
+            edit_btn.setStyleSheet(ModernStyles.table_button("edit"))
             edit_btn.clicked.connect(lambda checked, p=product: self.edit_product(p))
             
             delete_btn = QPushButton("🗑️ Supprimer")
             delete_btn.setFixedWidth(110)
-            delete_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #F44336;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #da190b;
-                }
-            """)
+            delete_btn.setStyleSheet(ModernStyles.table_button("delete"))
             delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
             
             actions_layout.addWidget(edit_btn)
@@ -239,32 +180,12 @@ class PriceManagementScreen(QWidget):
             
             edit_btn = QPushButton("✏️ Éditer")
             edit_btn.setFixedWidth(100)
-            edit_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #45a049;
-                }
-            """)
+            edit_btn.setStyleSheet(ModernStyles.table_button("edit"))
             edit_btn.clicked.connect(lambda checked, p=product: self.edit_product(p))
             
             delete_btn = QPushButton("🗑️ Supprimer")
             delete_btn.setFixedWidth(110)
-            delete_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #F44336;
-                    color: white;
-                    border: none;
-                    border-radius: 3px;
-                }
-                QPushButton:hover {
-                    background-color: #da190b;
-                }
-            """)
+            delete_btn.setStyleSheet(ModernStyles.table_button("delete"))
             delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
             
             actions_layout.addWidget(edit_btn)

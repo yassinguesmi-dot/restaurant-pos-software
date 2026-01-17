@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLa
                              QTableWidget, QTableWidgetItem, QSpinBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
+from src.utils.styles import ModernStyles
 
 class TablesScreen(QWidget):
     def __init__(self, db):
@@ -260,31 +261,64 @@ class AddTableDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("Ajouter une Table")
-        self.setGeometry(400, 300, 400, 200)
-        self.setStyleSheet("background-color: #F8F6F3;")
+        self.setWindowTitle("🗥️ Ajouter une Table")
+        self.setGeometry(400, 300, 450, 280)
+        self.setStyleSheet("background-color: white;")
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
         
-        layout.addWidget(QLabel("Numéro de table:"))
+        # Titre
+        title = QLabel("Créer une nouvelle table")
+        title.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        title.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        layout.addWidget(title)
+        
+        # Numéro de table
+        num_label = QLabel("🔢 Numéro de table:")
+        num_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        num_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        layout.addWidget(num_label)
+        
         self.table_number_input = QLineEdit()
         self.table_number_input.setPlaceholderText("Ex: Table 11")
+        self.table_number_input.setFont(QFont("Segoe UI", 11))
+        self.table_number_input.setStyleSheet(ModernStyles.modern_input())
+        self.table_number_input.setMinimumHeight(40)
         layout.addWidget(self.table_number_input)
         
-        layout.addWidget(QLabel("Capacité:"))
+        # Capacité
+        cap_label = QLabel("👥 Capacité (places):")
+        cap_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        cap_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        layout.addWidget(cap_label)
+        
         self.capacity_input = QSpinBox()
         self.capacity_input.setRange(1, 20)
         self.capacity_input.setValue(4)
+        self.capacity_input.setFont(QFont("Segoe UI", 11))
+        self.capacity_input.setStyleSheet(ModernStyles.modern_input())
+        self.capacity_input.setMinimumHeight(40)
         layout.addWidget(self.capacity_input)
         
+        layout.addStretch()
+        
+        # Boutons
         buttons_layout = QHBoxLayout()
-        cancel_btn = QPushButton("Annuler")
+        buttons_layout.setSpacing(10)
+        
+        cancel_btn = QPushButton("❌ Annuler")
+        cancel_btn.setFixedHeight(42)
+        cancel_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        cancel_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.TEXT_SECONDARY))
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("Enregistrer")
-        save_btn.setStyleSheet("background-color: #4CAF50; color: white;")
+        save_btn = QPushButton("✅ Enregistrer")
+        save_btn.setFixedHeight(42)
+        save_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        save_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.SUCCESS))
         save_btn.clicked.connect(self.save)
         buttons_layout.addWidget(save_btn)
         

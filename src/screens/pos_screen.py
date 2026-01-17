@@ -1,10 +1,12 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
                              QPushButton, QLabel, QSpinBox, QTableWidget, QTableWidgetItem,
-                             QComboBox, QMessageBox, QDialog, QLineEdit, QTabWidget, QCheckBox)
+                             QComboBox, QMessageBox, QDialog, QLineEdit, QTabWidget, QCheckBox,
+                             QSizePolicy)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPixmap
 from datetime import datetime
 from src.utils.invoice_generator import InvoiceGenerator
+from src.utils.styles import ModernStyles
 
 class POSScreen(QWidget):
     def __init__(self, db, current_user):
@@ -19,42 +21,45 @@ class POSScreen(QWidget):
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(15, 15, 15, 15)
         
         # Partie gauche : produits
         left_layout = QVBoxLayout()
+        left_layout.setSpacing(15)
         
         # Header avec catégories
-        header = QLabel("SÉLECTIONNEZ VOS PRODUITS")
-        header.setFont(QFont("Arial", 14, QFont.Bold))
+        header = QLabel("🛒 SÉLECTIONNEZ VOS PRODUITS")
+        header.setFont(QFont("Segoe UI", 22, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
-        header.setStyleSheet(f"background-color: #C8A882; color: white; padding: 15px;")
+        header.setStyleSheet(f"""
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 {ModernStyles.PRIMARY}, stop:1 #8B5CF6);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+        """)
         left_layout.addWidget(header)
         
         categories_layout = QHBoxLayout()
-        categories_label = QLabel("Catégorie :")
-        categories_label.setFont(QFont("Arial", 11, QFont.Bold))
+        categories_label = QLabel("Catégorie:")
+        categories_label.setFont(QFont("Segoe UI", 15, QFont.Bold))
+        categories_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
         self.category_combo = QComboBox()
         self.category_combo.addItem("Tous")
         self.category_combo.addItems(["Cafés", "Jus", "Chichas", "Boissons", "Gâteaux"])
         self.category_combo.currentTextChanged.connect(self.load_products)
-        self.category_combo.setStyleSheet("""
-            QComboBox {
-                background-color: white;
-                border: 2px solid #D4A574;
-                padding: 5px;
-                border-radius: 3px;
-            }
-        """)
+        self.category_combo.setStyleSheet(ModernStyles.modern_input())
+        self.category_combo.setMinimumHeight(65)
         categories_layout.addWidget(categories_label)
-        categories_layout.addWidget(self.category_combo)
-        categories_layout.addStretch()
-        categories_layout.setContentsMargins(15, 10, 15, 10)
+        categories_layout.addWidget(self.category_combo, 1)
+        categories_layout.setContentsMargins(10, 5, 10, 5)
         left_layout.addLayout(categories_layout)
         
         # Grille des produits
         self.products_grid = QGridLayout()
         self.products_grid.setSpacing(12)
-        self.products_grid.setContentsMargins(15, 15, 15, 15)
+        self.products_grid.setContentsMargins(10, 10, 10, 10)
         left_layout.addLayout(self.products_grid)
         left_layout.addStretch()
         
@@ -62,112 +67,103 @@ class POSScreen(QWidget):
         
         # Partie droite : panier
         right_layout = QVBoxLayout()
+        right_layout.setSpacing(15)
         
         # Sélection de table
         table_layout = QHBoxLayout()
-        table_layout.addWidget(QLabel("Table:"))
+        table_label = QLabel("Table:")
+        table_label.setFont(QFont("Segoe UI", 15, QFont.Bold))
+        table_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        table_layout.addWidget(table_label)
         self.table_combo = QComboBox()
         self.table_combo.addItem("Aucune")
         tables = self.db.get_all_tables()
         for table in tables:
             self.table_combo.addItem(table['table_number'], table['id'])
-        self.table_combo.setStyleSheet("""
-            QComboBox {
-                background-color: white;
-                border: 2px solid #D4A574;
-                padding: 5px;
-                border-radius: 3px;
-            }
-        """)
-        table_layout.addWidget(self.table_combo)
-        table_layout.addStretch()
+        self.table_combo.setStyleSheet(ModernStyles.modern_input())
+        self.table_combo.setMinimumHeight(65)
+        table_layout.addWidget(self.table_combo, 1)
         right_layout.addLayout(table_layout)
         
         # Titre du panier
-        cart_title = QLabel("PANIER")
-        cart_title.setFont(QFont("Arial", 14, QFont.Bold))
+        cart_title = QLabel("🛍️ PANIER")
+        cart_title.setFont(QFont("Segoe UI", 20, QFont.Bold))
         cart_title.setAlignment(Qt.AlignCenter)
-        cart_title.setStyleSheet(f"background-color: #C8A882; color: white; padding: 15px;")
+        cart_title.setStyleSheet(f"""
+            background-color: {ModernStyles.SECONDARY};
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+        """)
         right_layout.addWidget(cart_title)
         
         # Tableau du panier
         self.cart_table = QTableWidget()
-        self.cart_table.setColumnCount(5)
-        self.cart_table.setHorizontalHeaderLabels(["Article", "Qté", "PU", "Total", ""])
-        self.cart_table.setColumnWidth(0, 120)
-        self.cart_table.setColumnWidth(1, 40)
-        self.cart_table.setColumnWidth(2, 60)
-        self.cart_table.setColumnWidth(3, 70)
-        self.cart_table.setColumnWidth(4, 30)
-        self.cart_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 5px;
-                font-weight: bold;
-            }
-        """)
+        self.cart_table.setColumnCount(6)
+        self.cart_table.setHorizontalHeaderLabels(["Article", "Qté", "PU", "Total", "Retour", ""])
+        self.cart_table.setColumnWidth(0, 220)
+        self.cart_table.setColumnWidth(1, 80)
+        self.cart_table.setColumnWidth(2, 100)
+        self.cart_table.setColumnWidth(3, 120)
+        self.cart_table.setColumnWidth(4, 110)
+        self.cart_table.setColumnWidth(5, 70)
+        self.cart_table.setStyleSheet(ModernStyles.modern_table())
+        self.cart_table.verticalHeader().setVisible(False)
+        self.cart_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.cart_table.setRowHeight(0, 55)
+        self.cart_table.horizontalHeader().setMinimumHeight(45)
         right_layout.addWidget(self.cart_table)
         
         # Totaux
         totals_layout = QVBoxLayout()
+        totals_layout.setSpacing(8)
+        totals_layout.setContentsMargins(10, 10, 10, 10)
         
         self.subtotal_label = QLabel(f"Sous-total : 0.00 {self.currency}")
-        self.subtotal_label.setFont(QFont("Arial", 11, QFont.Bold))
+        self.subtotal_label.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        self.subtotal_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY}; padding: 5px;")
         totals_layout.addWidget(self.subtotal_label)
         
         self.tax_label = QLabel(f"TVA ({self.tax_rate*100:.0f}%) : 0.00 {self.currency}")
-        self.tax_label.setFont(QFont("Arial", 11))
+        self.tax_label.setFont(QFont("Segoe UI", 15))
+        self.tax_label.setStyleSheet(f"color: {ModernStyles.TEXT_SECONDARY}; padding: 5px;")
         totals_layout.addWidget(self.tax_label)
         
         self.total_label = QLabel(f"TOTAL TTC : 0.00 {self.currency}")
-        self.total_label.setFont(QFont("Arial", 13, QFont.Bold))
-        self.total_label.setStyleSheet(f"background-color: #D4A574; color: white; padding: 10px; border-radius: 3px;")
+        self.total_label.setFont(QFont("Segoe UI", 22, QFont.Bold))
+        self.total_label.setAlignment(Qt.AlignCenter)
+        self.total_label.setStyleSheet(f"""
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 {ModernStyles.SUCCESS}, stop:1 #059669);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 5px;
+        """)
         totals_layout.addWidget(self.total_label)
         
         totals_widget = QWidget()
         totals_widget.setLayout(totals_layout)
-        totals_widget.setStyleSheet("background-color: #F8F6F3;")
+        totals_widget.setStyleSheet(f"background-color: {ModernStyles.LIGHT_BG}; border-radius: 8px;")
         right_layout.addWidget(totals_widget)
         
         # Boutons d'action
         buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(10)
         
-        clear_btn = QPushButton("Vider")
-        clear_btn.setFixedHeight(45)
-        clear_btn.setFont(QFont("Arial", 11, QFont.Bold))
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #999999;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #777777;
-            }
-        """)
+        clear_btn = QPushButton("🗑️ Vider")
+        clear_btn.setMinimumHeight(60)
+        clear_btn.setFont(QFont("Segoe UI", 15, QFont.Bold))
+        clear_btn.setStyleSheet(ModernStyles.modern_button_outline(ModernStyles.TEXT_SECONDARY))
+        clear_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         clear_btn.clicked.connect(self.clear_cart)
         buttons_layout.addWidget(clear_btn)
         
-        payment_btn = QPushButton("PAYER")
-        payment_btn.setFixedHeight(45)
-        payment_btn.setFont(QFont("Arial", 12, QFont.Bold))
-        payment_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #C8A882;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #B8985F;
-            }
-        """)
+        payment_btn = QPushButton("💳 PAYER")
+        payment_btn.setMinimumHeight(60)
+        payment_btn.setFont(QFont("Segoe UI", 17, QFont.Bold))
+        payment_btn.setStyleSheet(ModernStyles.large_action_button(ModernStyles.PRIMARY))
+        payment_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         payment_btn.clicked.connect(self.process_payment)
         buttons_layout.addWidget(payment_btn)
         
@@ -176,7 +172,12 @@ class POSScreen(QWidget):
         
         main_layout.addLayout(right_layout, 1)
         
-        self.setStyleSheet("background-color: #F8F6F3;")
+        self.setStyleSheet(f"background-color: {ModernStyles.LIGHT_BG};")
+        self.load_products()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Rebuild product grid responsively on resize
         self.load_products()
 
     def load_products(self):
@@ -191,47 +192,71 @@ class POSScreen(QWidget):
         else:
             products = self.db.get_products_by_category(category)
         
+        # responsive columns: adapt to window width (left pane ~66% of total)
+        left_width = max(600, int(self.width() * 0.66) - 40)
+        columns = 3
+        if left_width >= 1200:
+            columns = 4
+        elif left_width < 900:
+            columns = 2
+
+        # compute button size
+        spacing = self.products_grid.spacing() or 12
+        btn_width = max(160, (left_width - (columns - 1) * spacing) // columns - 12)
+        btn_height = int(btn_width * 0.56)
+
         row, col = 0, 0
         for product in products:
             btn = QPushButton()
-            btn.setFixedSize(140, 100)
-            btn.setFont(QFont("Arial", 10, QFont.Bold))
+            btn.setMinimumSize(btn_width, btn_height)
+            btn.setMaximumSize(btn_width + 40, btn_height + 30)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
             
             # Vérifier le stock
             stock = product.get('quantity', 0) or 0
-            stock_text = f"\nStock: {stock}" if stock > 0 else "\n⚠️ Épuisé"
+            stock_text = f"📦 {stock}" if stock > 0 else "⚠️ Épuisé"
             
-            btn.setText(f"{product['name']}\n{product['price']:.2f} {self.currency}{stock_text}")
+            # nicer layout: name on top, price line, stock badge
+            btn.setText(f"{product['name']}\n\n{product['price']:.2f} {self.currency}    {stock_text}")
             
             # Style selon le stock
             if stock == 0:
                 btn.setStyleSheet(f"""
                     QPushButton {{
-                        background-color: #FFEBEE;
-                        border: 2px solid #F44336;
-                        border-radius: 5px;
-                        color: #2C2C2C;
+                        background-color: #FFF5F5;
+                        border: 2px solid {ModernStyles.DANGER};
+                        border-radius: 10px;
+                        color: {ModernStyles.TEXT_SECONDARY};
+                        padding: 10px;
+                        text-align: center;
                     }}
                 """)
                 btn.setEnabled(False)
             else:
                 btn.setStyleSheet(f"""
                     QPushButton {{
-                        background-color: white;
-                        border: 2px solid #D4A574;
-                        border-radius: 5px;
-                        color: #2C2C2C;
+                        background-color: {ModernStyles.CARD_BG};
+                        border: 1px solid {ModernStyles.BORDER};
+                        border-radius: 12px;
+                        color: {ModernStyles.TEXT_PRIMARY};
+                        padding: 8px;
+                        text-align: center;
                     }}
                     QPushButton:hover {{
-                        background-color: #F8F6F3;
-                        border: 2px solid #C8A882;
+                        background-color: {ModernStyles.PRIMARY};
+                        color: white;
+                        border: 1px solid {ModernStyles.PRIMARY};
+                    }}
+                    QPushButton:pressed {{
+                        background-color: {ModernStyles._darken(ModernStyles.PRIMARY, 10)};
                     }}
                 """)
                 btn.clicked.connect(lambda checked, p=product: self.add_to_cart(p))
             
             self.products_grid.addWidget(btn, row, col)
             col += 1
-            if col >= 3:
+            if col >= columns:
                 col = 0
                 row += 1
 
@@ -270,8 +295,12 @@ class POSScreen(QWidget):
         
         subtotal = 0
         for i, item in enumerate(self.current_order):
+            # Vérifier si c'est un retour
+            is_return = item.get('is_return', False)
             total_price = item['quantity'] * item['unit_price']
-            subtotal += total_price
+            # Si c'est un retour, le prix ne compte pas dans le subtotal
+            if not is_return:
+                subtotal += total_price
             
             self.cart_table.setItem(i, 0, QTableWidgetItem(item['name']))
             
@@ -281,13 +310,25 @@ class POSScreen(QWidget):
             qty_spinbox.valueChanged.connect(lambda val, idx=i: self.update_quantity(idx, val))
             self.cart_table.setCellWidget(i, 1, qty_spinbox)
             
-            self.cart_table.setItem(i, 2, QTableWidgetItem(f"{item['unit_price']:.2f} {self.currency}"))
-            self.cart_table.setItem(i, 3, QTableWidgetItem(f"{total_price:.2f} {self.currency}"))
+            # Afficher le prix réduit si c'est un retour
+            display_price = "--" if is_return else f"{item['unit_price']:.2f} {self.currency}"
+            self.cart_table.setItem(i, 2, QTableWidgetItem(display_price))
             
+            display_total = "(Gratuit)" if is_return else f"{total_price:.2f} {self.currency}"
+            self.cart_table.setItem(i, 3, QTableWidgetItem(display_total))
+            
+            # Bouton Retour
+            return_btn = QPushButton("✓ Retour" if not is_return else "✓✓ Retour")
+            return_btn.setFixedHeight(34)
+            return_btn.setStyleSheet(f"background-color: {'#10B981' if is_return else '#EF4444'}; color: white; border: none; border-radius: 6px; font-weight: bold; padding: 6px 10px;")
+            return_btn.clicked.connect(lambda checked, idx=i: self.toggle_return(idx))
+            self.cart_table.setCellWidget(i, 4, return_btn)
+
             delete_btn = QPushButton("✕")
-            delete_btn.setFixedWidth(30)
+            delete_btn.setFixedSize(36, 34)
+            delete_btn.setStyleSheet(ModernStyles.icon_button())
             delete_btn.clicked.connect(lambda checked, idx=i: self.remove_from_cart(idx))
-            self.cart_table.setCellWidget(i, 4, delete_btn)
+            self.cart_table.setCellWidget(i, 5, delete_btn)
         
         tax = subtotal * self.tax_rate
         total = subtotal + tax
@@ -295,6 +336,12 @@ class POSScreen(QWidget):
         self.subtotal_label.setText(f"Sous-total : {subtotal:.2f} {self.currency}")
         self.tax_label.setText(f"TVA ({self.tax_rate*100:.0f}%) : {tax:.2f} {self.currency}")
         self.total_label.setText(f"TOTAL TTC : {total:.2f} {self.currency}")
+
+    def toggle_return(self, index):
+        """Marquer/démarquer un article comme retour/remplacement"""
+        item = self.current_order[index]
+        item['is_return'] = not item.get('is_return', False)
+        self.update_cart_display()
 
     def update_quantity(self, index, value):
         item = self.current_order[index]
@@ -346,129 +393,148 @@ class PaymentDialog(QDialog):
         self.table_id = table_id
         self.current_user = current_user
         self.primary_color = "#C8A882"
-        self.currency = db.get_setting('currency', 'TND')
-        self.tax_rate = float(db.get_setting('tax_rate', '20')) / 100
+        try:
+            currency = db.get_setting('currency', 'TND')
+            if isinstance(currency, dict):
+                self.currency = currency.get('value', 'TND')
+            else:
+                self.currency = currency if currency else 'TND'
+        except:
+            self.currency = 'TND'
+        try:
+            tax = db.get_setting('tax_rate', '20')
+            if isinstance(tax, dict):
+                tax = tax.get('value', '20')
+            self.tax_rate = float(tax) / 100 if tax else 0.20
+        except:
+            self.tax_rate = 0.20
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("Paiement")
-        self.setGeometry(400, 300, 400, 350)
-        self.setStyleSheet("background-color: #F8F6F3;")
+        self.setWindowTitle("💳 Paiement")
+        self.setGeometry(400, 300, 500, 480)
+        self.setStyleSheet(f"background-color: white;")
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
         
-        # Résumé
-        summary = QLabel("Résumé de la commande:")
-        summary.setFont(QFont("Arial", 12, QFont.Bold))
-        layout.addWidget(summary)
+        # Titre
+        title = QLabel("Résumé de la commande")
+        title.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        title.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        layout.addWidget(title)
         
         total = sum(item['quantity'] * item['unit_price'] for item in self.order_items)
         tax = total * self.tax_rate
         total_with_tax = total + tax
         
+        # Détails du montant
+        details_layout = QVBoxLayout()
+        details_layout.setSpacing(8)
+        
         subtotal_label = QLabel(f"Sous-total : {total:.2f} {self.currency}")
-        subtotal_label.setFont(QFont("Arial", 11))
-        layout.addWidget(subtotal_label)
+        subtotal_label.setFont(QFont("Segoe UI", 11))
+        subtotal_label.setStyleSheet(f"color: {ModernStyles.TEXT_SECONDARY};")
+        details_layout.addWidget(subtotal_label)
         
         tax_label = QLabel(f"TVA ({self.tax_rate*100:.0f}%) : {tax:.2f} {self.currency}")
-        tax_label.setFont(QFont("Arial", 11))
-        layout.addWidget(tax_label)
+        tax_label.setFont(QFont("Segoe UI", 11))
+        tax_label.setStyleSheet(f"color: {ModernStyles.TEXT_SECONDARY};")
+        details_layout.addWidget(tax_label)
         
+        layout.addLayout(details_layout)
+        
+        # Total avec gradient
         total_label = QLabel(f"Total TTC : {total_with_tax:.2f} {self.currency}")
-        total_label.setFont(QFont("Arial", 14, QFont.Bold))
-        total_label.setStyleSheet(f"background-color: {self.primary_color}; color: white; padding: 10px; border-radius: 3px;")
+        total_label.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        total_label.setAlignment(Qt.AlignCenter)
+        total_label.setStyleSheet(f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {ModernStyles.PRIMARY}, stop:1 #8B5CF6); color: white; padding: 15px; border-radius: 8px;")
         layout.addWidget(total_label)
         
         # Méthode de paiement
-        method_layout = QHBoxLayout()
-        method_layout.addWidget(QLabel("Mode de paiement :"))
+        method_label = QLabel("🔵 Mode de paiement :")
+        method_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        method_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        layout.addWidget(method_label)
+        
         self.payment_method = QComboBox()
-        self.payment_method.addItems(["Espèces", "Carte", "Chèque"])
+        self.payment_method.addItems(["💵 Espèces", "💳 Carte", "✓ Chèque"])
         self.payment_method.currentTextChanged.connect(self.on_payment_method_changed)
-        self.payment_method.setStyleSheet("""
-            QComboBox {
-                background-color: white;
-                border: 1px solid #D4A574;
-                padding: 5px;
-                border-radius: 3px;
-            }
-        """)
-        method_layout.addWidget(self.payment_method)
-        layout.addLayout(method_layout)
+        self.payment_method.setStyleSheet(ModernStyles.modern_input())
+        self.payment_method.setMinimumHeight(40)
+        layout.addWidget(self.payment_method)
         
         # Montant reçu (pour espèces)
-        self.amount_received_layout = QHBoxLayout()
-        self.amount_received_layout.addWidget(QLabel("Montant reçu :"))
+        self.amount_received_layout = QVBoxLayout()
+        amount_label = QLabel("💰 Montant reçu :")
+        amount_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        amount_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        self.amount_received_layout.addWidget(amount_label)
+        
         self.amount_received_input = QLineEdit()
         self.amount_received_input.setPlaceholderText("0.00")
+        self.amount_received_input.setFont(QFont("Segoe UI", 12))
         self.amount_received_input.textChanged.connect(self.calculate_change)
+        self.amount_received_input.setStyleSheet(ModernStyles.modern_input())
+        self.amount_received_input.setMinimumHeight(40)
         self.amount_received_layout.addWidget(self.amount_received_input)
         layout.addLayout(self.amount_received_layout)
         
         # Monnaie
         self.change_label = QLabel("Monnaie : 0.00 " + self.currency)
-        self.change_label.setFont(QFont("Arial", 12, QFont.Bold))
-        self.change_label.setStyleSheet("color: #4CAF50;")
+        self.change_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.change_label.setStyleSheet(f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #10B981, stop:1 #059669); color: white; padding: 10px; border-radius: 6px; text-align: center;")
+        self.change_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.change_label)
         
         # Paiement fractionné
-        self.split_checkbox = QCheckBox("Paiement fractionné")
+        self.split_checkbox = QCheckBox("🔀 Paiement fractionné")
+        self.split_checkbox.setFont(QFont("Segoe UI", 11))
         self.split_checkbox.stateChanged.connect(self.on_split_changed)
+        self.split_checkbox.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
         layout.addWidget(self.split_checkbox)
+        
+        split_layout = QHBoxLayout()
+        split_label = QLabel("Nombre de parts:")
+        split_label.setFont(QFont("Segoe UI", 11))
+        split_label.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY};")
+        split_layout.addWidget(split_label)
         
         self.split_number_input = QSpinBox()
         self.split_number_input.setRange(2, 10)
         self.split_number_input.setValue(2)
         self.split_number_input.setEnabled(False)
-        split_layout = QHBoxLayout()
-        split_layout.addWidget(QLabel("Nombre de parts:"))
+        self.split_number_input.setStyleSheet(ModernStyles.modern_input())
+        self.split_number_input.setMinimumHeight(35)
+        self.split_number_input.setMaximumWidth(100)
         split_layout.addWidget(self.split_number_input)
+        split_layout.addStretch()
         layout.addLayout(split_layout)
         
         layout.addStretch()
         
         # Boutons
         buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(10)
         
-        cancel_btn = QPushButton("Annuler")
-        cancel_btn.setFixedHeight(40)
-        cancel_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #999999;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-        """)
+        cancel_btn = QPushButton("❌ Annuler")
+        cancel_btn.setFixedHeight(45)
+        cancel_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        cancel_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.TEXT_SECONDARY))
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
         
-        partial_btn = QPushButton("Paiement partiel")
-        partial_btn.setFixedHeight(40)
-        partial_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF9800;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-        """)
+        partial_btn = QPushButton("⏸️ Paiement partiel")
+        partial_btn.setFixedHeight(45)
+        partial_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        partial_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.INFO))
         partial_btn.clicked.connect(self.partial_payment)
         buttons_layout.addWidget(partial_btn)
         
-        confirm_btn = QPushButton("Confirmer le paiement")
-        confirm_btn.setFixedHeight(40)
-        confirm_btn.setFont(QFont("Arial", 11, QFont.Bold))
-        confirm_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.primary_color};
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }}
-            QPushButton:hover {{
-                background-color: #B8985F;
-            }}
-        """)
+        confirm_btn = QPushButton("✓ Confirmer le paiement")
+        confirm_btn.setFixedHeight(45)
+        confirm_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        confirm_btn.setStyleSheet(ModernStyles.large_action_button(ModernStyles.SUCCESS))
         confirm_btn.clicked.connect(self.accept)
         buttons_layout.addWidget(confirm_btn)
         
@@ -498,10 +564,10 @@ class PaymentDialog(QDialog):
             change = amount_received - self.total_amount
             if change >= 0:
                 self.change_label.setText(f"Monnaie : {change:.2f} {self.currency}")
-                self.change_label.setStyleSheet("color: #4CAF50;")
+                self.change_label.setStyleSheet(f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #10B981, stop:1 #059669); color: white; padding: 10px; border-radius: 6px;")
             else:
                 self.change_label.setText(f"Manquant : {abs(change):.2f} {self.currency}")
-                self.change_label.setStyleSheet("color: #F44336;")
+                self.change_label.setStyleSheet(f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #EF4444, stop:1 #DC2626); color: white; padding: 10px; border-radius: 6px;")
         except ValueError:
             self.change_label.setText("Monnaie : 0.00 " + self.currency)
 

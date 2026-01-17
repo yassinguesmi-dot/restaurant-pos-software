@@ -17,10 +17,37 @@ except ImportError:
 
 class Database:
     def __init__(self, db_path="cafe216_pos.db"):
-        self.db_path = db_path
+        # Resolve to a stable, user-specific path if default is used
+        self.db_path = self._resolve_default_db_path(db_path)
         self.connection = None
         self.init_database()
         self.init_sample_products()
+
+    def _resolve_default_db_path(self, provided_path: str) -> str:
+        # If a custom path was provided, use it as-is
+        if provided_path and provided_path != "cafe216_pos.db":
+            return provided_path
+        try:
+            # Prefer OS-specific app data locations to avoid cwd issues
+            if os.name == "nt":
+                appdata = os.environ.get("APPDATA")
+                base_dir = os.path.join(appdata or os.path.expanduser("~"), "Cafe216", "POS")
+            else:
+                base_dir = os.path.join(os.path.expanduser("~"), ".cafe216")
+            os.makedirs(base_dir, exist_ok=True)
+            new_path = os.path.join(base_dir, "cafe216_pos.db")
+            # Migrate existing cwd database if present and target missing
+            cwd_path = os.path.join(os.getcwd(), "cafe216_pos.db")
+            if os.path.exists(cwd_path) and not os.path.exists(new_path):
+                try:
+                    import shutil
+                    shutil.copy2(cwd_path, new_path)
+                except Exception:
+                    pass
+            return new_path
+        except Exception:
+            # Fallback to current directory if anything goes wrong
+            return provided_path or "cafe216_pos.db"
 
     def init_database(self):
         try:
@@ -327,7 +354,10 @@ class Database:
         order_number = f"CMD{datetime.now().strftime('%Y%m%d%H%M%S')}"
         invoice_number = self.get_next_invoice_number()
         
-        total_amount = sum(item['quantity'] * item['unit_price'] for item in items)
+        # Calculer le montant total (en excluant les articles marqués comme retour)
+        total_amount = sum(item['quantity'] * item['unit_price'] 
+                          for item in items 
+                          if not item.get('is_return', False))
         
         # Vérifier le stock avant de créer la commande
         for item in items:
@@ -342,16 +372,21 @@ class Database:
         
         order_id = cursor.lastrowid
         
-        # Décrémenter le stock automatiquement
+        # Traiter chaque article
         for item in items:
+            is_return = item.get('is_return', False)
+            # Le prix enregistré est 0 pour les retours
+            unit_price = 0 if is_return else item['unit_price']
+            total_price = 0 if is_return else (item['quantity'] * item['unit_price'])
+            
             cursor.execute('''
                 INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (order_id, item['product_id'], item['quantity'], item['unit_price'], 
-                  item['quantity'] * item['unit_price']))
+            ''', (order_id, item['product_id'], item['quantity'], unit_price, total_price))
             
-            # Décrémenter le stock
-            self.decrement_stock(item['product_id'], item['quantity'], order_id, "Vente")
+            # Décrémenter le stock (même pour les retours)
+            reason = "Remplacement (Retour)" if is_return else "Vente"
+            self.decrement_stock(item['product_id'], item['quantity'], order_id, reason)
         
         # Mettre à jour le statut de la table si nécessaire
         if table_id:
@@ -363,7 +398,7 @@ class Database:
     def get_all_orders(self):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM orders ORDER BY created_at DESC')
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     def get_order_details(self, order_id):
         cursor = self.connection.cursor()
@@ -373,7 +408,7 @@ class Database:
             JOIN products p ON oi.product_id = p.id
             WHERE oi.order_id = ?
         ''', (order_id,))
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     def record_payment(self, order_id, amount, payment_method, amount_received=None, 
                        change_amount=None, is_split=False, split_number=None, is_partial=False):
@@ -444,7 +479,7 @@ class Database:
             ORDER BY total_qty DESC
             LIMIT 10
         ''', (date,))
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     # ========== GESTION DU STOCK ==========
     def update_product_stock(self, product_id, quantity, min_quantity=None):
@@ -530,7 +565,7 @@ class Database:
                 ORDER BY sm.created_at DESC
                 LIMIT ?
             ''', (limit,))
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     def get_low_stock_products(self):
         cursor = self.connection.cursor()
@@ -578,16 +613,18 @@ class Database:
     def get_all_users(self):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM users WHERE is_active = 1')
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
     def get_user(self, user_id):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
     def get_user_by_username(self, username):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
     def hash_password(self, password: str) -> str:
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -650,7 +687,8 @@ class Database:
             ORDER BY orders_count DESC
             LIMIT 1
         ''', (date,))
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
     # ========== GESTION DES PARAMÈTRES ==========
     def get_setting(self, key, default=None):
@@ -714,7 +752,7 @@ class Database:
             GROUP BY DATE(created_at)
             ORDER BY date
         ''', (start_date, end_date))
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     # ========== SAUVEGARDE ==========
     def backup_database(self, backup_path):
@@ -729,121 +767,4 @@ class Database:
     def close(self):
         if self.connection:
             self.connection.close()
-
-import kivy
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.image import Image
-from kivy.uix.filechooser import FileChooserIconView
-from kivy.uix.popup import Popup
-from kivy.core.window import Window
-from kivy.graphics import Color, Rectangle
-
-from kivy.lang import Builder
-Builder.load_string('''
-<MainWidget>:
-    orientation: 'vertical'
-    padding: 10
-    spacing: 10
-
-    Image:
-        source: 'logo.png'
-        size_hint: (1, 0.3)
-        allow_stretch: True
-        keep_ratio: True
-
-    Label:
-        text: "Bienvenue dans l'application de gestion de café"
-        font_size: 24
-        halign: 'center'
-        size_hint: (1, 0.1)
-
-    Button:
-        text: "Commencer"
-        font_size: 18
-        size_hint: (1, 0.1)
-        on_press: app.show_login()
-
-    Label:
-        text: "Version 1.0 - Café 216"
-        font_size: 12
-        halign: 'center'
-        size_hint: (1, 0.1)
-
-    ''')
-class MainWidget(BoxLayout):
-    pass
-
-class LoginWidget(BoxLayout):
-    def __init__(self, **kwargs):
-        super(LoginWidget, self).__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.padding = 10
-        self.spacing = 10
-
-        with self.canvas.before:
-            Color(1, 1, 1, 1)  # Couleur de fond blanche
-            self.rect = Rectangle(size=self.size, pos=self.pos)
-
-        self.bind(size=self._update_rect, pos=self._update_rect)
-
-        self.add_widget(Label(text="Connexion", font_size=24, size_hint_y=None, height=44))
-
-        self.username = TextInput(hint_text="Nom d'utilisateur", size_hint_y=None, height=44)
-        self.add_widget(self.username)
-
-        self.password = TextInput(hint_text="Mot de passe", size_hint_y=None, height=44, password=True)
-        self.add_widget(self.password)
-
-        self.login_button = Button(text="Se connecter", size_hint_y=None, height=44)
-        self.login_button.bind(on_press=self.login)
-        self.add_widget(self.login_button)
-
-        self.message = Label(text="", color=(1, 0, 0, 1), size_hint_y=None, height=44)
-        self.add_widget(self.message)
-
-    def _update_rect(self, instance, value):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
-
-    def login(self, instance):
-        username = self.username.text
-        password = self.password.text
-
-        if not username or not password:
-            self.message.text = "Veuillez entrer votre nom d'utilisateur et votre mot de passe."
-            return
-
-        # Vérifier les identifiants
-        db = Database()
-        user = db.verify_user_credentials(username, password)
-        db.close()
-
-        if user:
-            self.message.text = ""
-            App.get_running_app().show_main_menu(user)
-        else:
-            self.message.text = "Nom d'utilisateur ou mot de passe incorrect."
-
-class CafeApp(App):
-    def build(self):
-        Window.clearcolor = (1, 1, 1, 1)  # Fond blanc
-        return MainWidget()
-
-    def show_login(self):
-        self.root.clear_widgets()
-        self.root.add_widget(LoginWidget())
-
-    def show_main_menu(self, user):
-        self.root.clear_widgets()
-        # TODO: Ajouter le menu principal
-        self.root.add_widget(Label(text=f"Bienvenue, {user['full_name']}!", font_size=24))
-
-if __name__ == '__main__':
-    CafeApp().run()
-
-pip install kivy pillow
 

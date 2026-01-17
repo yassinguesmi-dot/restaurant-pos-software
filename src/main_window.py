@@ -10,7 +10,9 @@ from src.screens.settings_screen import SettingsScreen
 from src.screens.price_management_screen import PriceManagementScreen
 from src.screens.stock_management_screen import StockManagementScreen
 from src.screens.tables_screen import TablesScreen
+from src.screens.users_management_screen import UsersManagementScreen
 from src.database import Database
+from src.utils.styles import ModernStyles
 import os
 
 class MainWindow(QMainWindow):
@@ -18,7 +20,22 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.db = db
         self.current_user = current_user
-        self.allowed_indices = {0} if (current_user and current_user['role'] == 'employé') else set(range(8))
+        
+        # Définir les permissions par rôle
+        # Rôles: admin, gérant, employé, gestionnaire_stock, gestionnaire_produits
+        role = current_user['role'] if current_user else 'employé'
+        
+        # Définir les indices accessibles selon le rôle
+        # 0=POS, 1=Produits, 2=Prix, 3=Stock, 4=Tables, 5=Commandes, 6=Rapports, 7=Paramètres, 8=Utilisateurs
+        self.role_permissions = {
+            'admin': {0, 1, 2, 3, 4, 5, 6, 7, 8},  # Accès complet
+            'gérant': {0, 1, 2, 3, 4, 5, 6, 7, 8},  # Accès complet
+            'gestionnaire_produits': {0, 1, 2, 3, 4, 5},  # POS, Produits, Prix, Stock, Tables, Commandes
+            'gestionnaire_stock': {0, 3, 5},  # POS, Stock, Commandes
+            'employé': {0, 4, 5},  # POS, Tables, Commandes
+        }
+        
+        self.allowed_indices = self.role_permissions.get(role, {0})
         self.init_ui()
         self.setWindowTitle("Café 216 - POS System")
         self.setGeometry(0, 0, 1400, 900)
@@ -29,6 +46,13 @@ class MainWindow(QMainWindow):
         self.secondary_color = "#2C2C2C"  # Dark charcoal
         self.accent_color = "#D4A574"  # Gold accent
         self.background_color = "#F8F6F3"  # Off-white
+        
+        # Set modern window styling
+        self.setStyleSheet(f"""
+            QMainWindow {{
+                background-color: {ModernStyles.LIGHT_BG};
+            }}
+        """)
         
         # Widget central
         central_widget = QWidget()
@@ -53,6 +77,7 @@ class MainWindow(QMainWindow):
         self.orders_screen = OrdersScreen(self.db)
         self.reports_screen = ReportsScreen(self.db)
         self.settings_screen = SettingsScreen(self.db)
+        self.users_screen = UsersManagementScreen(self.db, self.current_user)
         
         self.stacked_widget.addWidget(self.pos_screen)
         self.stacked_widget.addWidget(self.products_screen)
@@ -62,6 +87,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.orders_screen)
         self.stacked_widget.addWidget(self.reports_screen)
         self.stacked_widget.addWidget(self.settings_screen)
+        self.stacked_widget.addWidget(self.users_screen)
         
         main_layout.addWidget(self.stacked_widget, 1)
         
@@ -77,20 +103,26 @@ class MainWindow(QMainWindow):
         
         logo_container = QWidget()
         logo_layout = QVBoxLayout(logo_container)
-        logo_layout.setContentsMargins(10, 15, 10, 15)
+        logo_layout.setContentsMargins(10, 20, 10, 20)
+        
+        icon_label = QLabel("☕")
+        icon_label.setFont(QFont("Arial", 32))
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet(f"color: {self.accent_color};")
+        logo_layout.addWidget(icon_label)
         
         title = QLabel("CAFÉ 216")
-        title_font = QFont("Arial", 16, QFont.Bold)
+        title_font = QFont("Arial", 18, QFont.Bold)
         title.setFont(title_font)
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"color: {self.accent_color}; font-weight: bold;")
+        title.setStyleSheet(f"color: {self.accent_color}; font-weight: bold; letter-spacing: 2px;")
         logo_layout.addWidget(title)
         
-        subtitle = QLabel("POS System")
+        subtitle = QLabel("Point de Vente")
         subtitle_font = QFont("Arial", 9)
         subtitle.setFont(subtitle_font)
         subtitle.setAlignment(Qt.AlignCenter)
-        subtitle.setStyleSheet(f"color: white;")
+        subtitle.setStyleSheet(f"color: rgba(255, 255, 255, 0.8);")
         logo_layout.addWidget(subtitle)
         
         logo_container.setStyleSheet(f"background-color: {self.secondary_color}; padding: 5px;")
@@ -104,33 +136,15 @@ class MainWindow(QMainWindow):
             ("Tables", 4, "🪑"),
             ("Commandes", 5, "📋"),
             ("Rapports", 6, "📈"),
-            ("Paramètres", 7, "⚙️")
+            ("Paramètres", 7, "⚙️"),
+            ("Utilisateurs", 8, "👥")
         ]
         
         for btn_text, index, icon in nav_buttons:
             btn = QPushButton(f"{icon}\n{btn_text}")
             btn.setFixedHeight(70)
             btn.setFont(QFont("Arial", 10, QFont.Bold))
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {self.secondary_color};
-                    border: none;
-                    color: white;
-                    border-left: 4px solid transparent;
-                }}
-                QPushButton:hover {{
-                    background-color: #3a3a3a;
-                    border-left: 4px solid {self.accent_color};
-                }}
-                QPushButton:pressed {{
-                    background-color: {self.accent_color};
-                    color: {self.secondary_color};
-                }}
-                QPushButton:disabled {{
-                    background-color: #444444;
-                    color: #AAAAAA;
-                }}
-            """)
+            btn.setStyleSheet(ModernStyles.sidebar_button())
             if index in self.allowed_indices:
                 btn.clicked.connect(lambda checked, i=index: self.navigate(i))
             else:
@@ -146,19 +160,10 @@ class MainWindow(QMainWindow):
             sidebar_layout.addWidget(user_info)
         
         # Bouton déconnexion
-        logout_btn = QPushButton("Déconnexion")
+        logout_btn = QPushButton("🚪 Déconnexion")
         logout_btn.setFixedHeight(50)
-        logout_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: #CC3333;
-                color: white;
-                border: none;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #992222;
-            }}
-        """)
+        logout_btn.setFont(QFont("Arial", 11, QFont.Bold))
+        logout_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.DANGER))
         logout_btn.clicked.connect(self.close)
         sidebar_layout.addWidget(logout_btn)
         

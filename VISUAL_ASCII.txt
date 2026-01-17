@@ -1,0 +1,320 @@
+# 🎨 Aperçu Visuel ASCII des Écrans
+
+## 1️⃣ ÉCRAN DE CONNEXION
+
+```
+╔════════════════════════════════════════════════════╗
+║                                                    ║
+║              ☕ CAFE 216 POS                       ║
+║             Point de Vente                         ║
+║                                                    ║
+║  ╔════════════════════════════════════════════╗  ║
+║  ║ Nom d'utilisateur                          ║  ║
+║  ║ ┌──────────────────────────────────────┐   ║  ║
+║  ║ │ produits                             │   ║  ║
+║  ║ └──────────────────────────────────────┘   ║  ║
+║  ║                                             ║  ║
+║  ║ Mot de passe                               ║  ║
+║  ║ ┌──────────────────────────────────────┐   ║  ║
+║  ║ │ •••••••••••••                        │   ║  ║
+║  ║ └──────────────────────────────────────┘   ║  ║
+║  ║                                             ║  ║
+║  ║ Rôle                                        ║  ║
+║  ║ ┌──────────────────────────────────────┐   ║  ║
+║  ║ │ 📦 Gestionnaire Produits             │   ║  ║
+║  ║ └──────────────────────────────────────┘   ║  ║
+║  ║                                             ║  ║
+║  ║           [Se connecter]                    ║  ║
+║  ║                                             ║  ║
+║  ║      Par défaut: admin / admin             ║  ║
+║  ╚════════════════════════════════════════════╝  ║
+║                                                    ║
+╚════════════════════════════════════════════════════╝
+
+🎯 Le rôle s'affiche automatiquement après avoir saisi
+   le mot de passe et cliqué sur "Se connecter"
+
+✨ Emojis pour chaque rôle:
+   👑 Administrateur
+   🎯 Gérant
+   📦 Gestionnaire Produits ← Cas demandé
+   📊 Gestionnaire Stock
+   👤 Employé
+```
+
+---
+
+## 2️⃣ BARRE LATÉRALE POUR UN GESTIONNAIRE PRODUITS
+
+```
+╔═════════════════════════════════════╗
+║                                     ║
+║          ☕ CAFÉ 216               ║
+║           Point de Vente            ║
+║                                     ║
+╠═════════════════════════════════════╣
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   ☕ VENTES                   │  ║  ✅ ACTIVÉ
+║  │  (Faire les commandes)       │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   📦 PRODUITS                │  ║  ✅ ACTIVÉ
+║  │  (Créer/modifier produits)   │  ║  ← ACCÈS PRINCIPAL
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   💰 PRIX & PRODUITS         │  ║  ✅ ACTIVÉ
+║  │  (Ajuster les tarifs)        │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   📊 STOCK                   │  ║  ✅ ACTIVÉ
+║  │  (Consulter le stock)        │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   🪑 TABLES                  │  ║  ✅ ACTIVÉ
+║  │  (Gérer les tables)          │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   📋 COMMANDES               │  ║  ✅ ACTIVÉ
+║  │  (Historique commandes)      │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   📈 RAPPORTS        [GRISÉ] │  ║  ❌ DÉSACTIVÉ
+║  │  (Statistiques)              │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   ⚙️  PARAMÈTRES      [GRISÉ] │  ║  ❌ DÉSACTIVÉ
+║  │  (Configuration système)     │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+║  ┌──────────────────────────────┐  ║
+║  │   👥 UTILISATEURS    [GRISÉ] │  ║  ❌ DÉSACTIVÉ
+║  │  (Gérer les comptes)         │  ║
+║  └──────────────────────────────┘  ║
+║                                     ║
+╠═════════════════════════════════════╣
+║                                     ║
+║  Connecté: produits                 ║
+║  Rôle: gestionnaire_produits        ║
+║                                     ║
+╚═════════════════════════════════════╝
+
+📌 Les boutons grisés ne réagissent pas au clic
+📌 Le rôle est affichié en bas du panneau latéral
+📌 6 modules accessibles sur 9 pour ce rôle
+```
+
+---
+
+## 3️⃣ ÉCRAN DE GESTION DES PRODUITS
+
+```
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║              📦 Gestion des Produits                       ║
+║         Créez et modifiez les produits du café            ║
+║                                                            ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  [➕ Ajouter un produit]  [🔄 Actualiser]                 ║
+║                                                            ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  ID │ Produit      │ Prix  │ Stock │ Catégorie  │ Actions
+║  ───┼──────────────┼───────┼───────┼────────────┼──────────
+║   1 │ Café          │ 1.50  │  150  │ Boissons   │ ✏️ 🗑️
+║   2 │ Cappuccino    │ 2.00  │  120  │ Boissons   │ ✏️ 🗑️
+║   3 │ Croissant     │ 1.00  │  45   │ Pâtisseries│ ✏️ 🗑️
+║   4 │ Thé           │ 1.30  │  80   │ Boissons   │ ✏️ 🗑️
+║   5 │ Pain Chocolat │ 1.20  │  30   │ Pâtisseries│ ✏️ 🗑️
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+✨ Vous pouvez:
+   ✅ Créer de nouveaux produits
+   ✅ Modifier les existants
+   ✅ Supprimer les produits
+   ✅ Gérer les stocks et catégories
+```
+
+---
+
+## 4️⃣ ÉCRAN DE GESTION DES UTILISATEURS (ADMIN/GÉRANT)
+
+```
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║           👥 Gestion des Utilisateurs                      ║
+║    Gérez les accès et les rôles des utilisateurs          ║
+║                                                            ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  [➕ Ajouter un utilisateur]  [🔄 Actualiser]             ║
+║                                                            ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  ID │ Username   │ Nom Complet      │ Rôle            │ Actions
+║  ───┼────────────┼──────────────────┼─────────────────┼────────
+║   1 │ admin      │ Administrateur   │ 👑 admin        │ ✏️
+║   2 │ gerant     │ Gérant Principal │ 🎯 gérant       │ ✏️
+║   3 │ produits   │ Alice Martin     │ 📦 prod. ...    │ ✏️
+║   4 │ stock      │ Bob Durand       │ 📊 stock        │ ✏️
+║   5 │ employe1   │ Jean Dupont      │ 👤 employé      │ ✏️
+║   6 │ employe2   │ Marie Moreau     │ 👤 employé      │ ✏️
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+🎯 Accessible uniquement par: admin ou gérant
+
+✨ Vous pouvez:
+   ✅ Voir tous les utilisateurs
+   ✅ Ajouter de nouveaux utilisateurs
+   ✅ Modifier les rôles
+   ✅ Désactiver des comptes
+```
+
+---
+
+## 5️⃣ FORMULAIRE D'AJOUT D'UTILISATEUR
+
+```
+╔═══════════════════════════════════════════╗
+║   Ajouter un utilisateur                  ║
+╠═══════════════════════════════════════════╣
+║                                           ║
+║  Nom d'utilisateur:                       ║
+║  ┌─────────────────────────────────────┐ ║
+║  │ nouveau_user                        │ ║
+║  └─────────────────────────────────────┘ ║
+║                                           ║
+║  Nom complet:                             ║
+║  ┌─────────────────────────────────────┐ ║
+║  │ Toto Dupont                         │ ║
+║  └─────────────────────────────────────┘ ║
+║                                           ║
+║  Mot de passe:                            ║
+║  ┌─────────────────────────────────────┐ ║
+║  │ •••••••••••••••••                   │ ║
+║  └─────────────────────────────────────┘ ║
+║                                           ║
+║  Rôle:                                    ║
+║  ┌─────────────────────────────────────┐ ║
+║  │ 📦 gestionnaire_produits          ▼│ ║
+║  │  - employé                         │ ║
+║  │  - gestionnaire_stock              │ ║
+║  │  - gestionnaire_produits ← SÉLECTIONNÉ
+║  │  - gérant                          │ ║
+║  │  - admin                           │ ║
+║  └─────────────────────────────────────┘ ║
+║                                           ║
+║                                           ║
+║  [Annuler]                  [Créer]      ║
+║                                           ║
+╚═══════════════════════════════════════════╝
+
+🎯 Cas d'usage: Créer un compte pour quelqu'un
+   qui ne peut que gérer les produits
+```
+
+---
+
+## 6️⃣ MESSAGE D'ERREUR (ACCÈS REFUSÉ)
+
+```
+╔═══════════════════════════════════════════╗
+║                                           ║
+║          🔒 Accès Refusé                  ║
+║                                           ║
+║  Seuls les administrateurs et gérants     ║
+║  peuvent accéder à la gestion des         ║
+║  utilisateurs.                            ║
+║                                           ║
+║                                           ║
+╚═══════════════════════════════════════════╝
+
+⚠️ Affiché si un utilisateur "employé" ou "stock"
+   essaie d'accéder à l'écran de gestion des utilisateurs
+```
+
+---
+
+## 7️⃣ FLUX DE NAVIGATION COMPLET
+
+```
+                    ┌─────────────────┐
+                    │  Lancer l'app   │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │ Écran de Login  │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────────────────┐
+                    │ Saisir identifiants        │
+                    │ - Username: produits       │
+                    │ - Password: produits123    │
+                    └────────┬────────────────────┘
+                             │
+                    ┌────────▼──────────────────┐
+                    │ Afficher le rôle détecté │
+                    │ 📦 Gestionnaire Produits  │
+                    └────────┬──────────────────┘
+                             │
+                    ┌────────▼──────────────────────┐
+                    │ Vérifier les permissions      │
+                    │ Charger les modules accessibles
+                    └────────┬──────────────────────┘
+                             │
+             ┌───────────────┴──────────────────┐
+             │                                  │
+             ▼                                  ▼
+    ┌─────────────────┐          ┌──────────────────────┐
+    │  Modules Actifs │          │ Modules Désactivés   │
+    ├─────────────────┤          ├──────────────────────┤
+    │ ✅ POS          │          │ ❌ Rapports (grisé)  │
+    │ ✅ Produits     │          │ ❌ Paramètres (grisé)│
+    │ ✅ Prix         │          │ ❌ Utilisateurs      │
+    │ ✅ Stock        │          │    (grisé)           │
+    │ ✅ Tables       │          │                      │
+    │ ✅ Commandes    │          │                      │
+    └────────┬────────┘          └──────────────────────┘
+             │
+    ┌────────▼──────────────────┐
+    │ Afficher la fenêtre POS   │
+    │ Avec la barre latérale    │
+    │ (boutons grisés)          │
+    └────────────────────────────┘
+```
+
+---
+
+## 📊 Comparaison des Accès par Rôle
+
+```
+┌──────────────────┬────────┬────────┬─────────┬───────┬────────┐
+│ Module           │ Admin  │ Gérant │ Produit │ Stock │ Employé│
+├──────────────────┼────────┼────────┼─────────┼───────┼────────┤
+│ ☕ POS            │   ✅   │   ✅   │   ✅    │  ✅   │   ✅   │
+│ 📦 PRODUITS      │   ✅   │   ✅   │   ✅    │  ❌   │   ❌   │ ← DEMANDÉ
+│ 💰 PRIX          │   ✅   │   ✅   │   ✅    │  ❌   │   ❌   │
+│ 📊 STOCK         │   ✅   │   ✅   │   ✅    │  ✅   │   ❌   │
+│ 🪑 TABLES        │   ✅   │   ✅   │   ✅    │  ❌   │   ✅   │
+│ 📋 COMMANDES     │   ✅   │   ✅   │   ✅    │  ✅   │   ✅   │
+│ 📈 RAPPORTS      │   ✅   │   ✅   │   ❌    │  ❌   │   ❌   │
+│ ⚙️  PARAMÈTRES    │   ✅   │   ✅   │   ❌    │  ❌   │   ❌   │
+│ 👥 UTILISATEURS  │   ✅   │   ✅   │   ❌    │  ❌   │   ❌   │
+└──────────────────┴────────┴────────┴─────────┴───────┴────────┘
+```
+
+---
+
+**Créé le:** 12 janvier 2026  
+**Version:** 1.0  
+**Status:** ✅ Production Ready
