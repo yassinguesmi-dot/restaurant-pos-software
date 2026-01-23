@@ -1,12 +1,26 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
                              QPushButton, QLabel, QSpinBox, QTableWidget, QTableWidgetItem,
                              QComboBox, QMessageBox, QDialog, QLineEdit, QTabWidget, QCheckBox,
-                             QSizePolicy)
+                             QSizePolicy, QScrollArea)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPixmap
 from datetime import datetime
 from src.utils.invoice_generator import InvoiceGenerator
 from src.utils.styles import ModernStyles
+
+
+def _safe_get(obj, key, default=None):
+    try:
+        if obj is None:
+            return default
+        if hasattr(obj, 'get'):
+            return obj.get(key, default)
+        if hasattr(obj, 'keys') and key in obj.keys():
+            v = obj[key]
+            return default if v is None else v
+        return getattr(obj, key, default)
+    except Exception:
+        return default
 
 class POSScreen(QWidget):
     def __init__(self, db, current_user):
@@ -56,12 +70,24 @@ class POSScreen(QWidget):
         categories_layout.setContentsMargins(10, 5, 10, 5)
         left_layout.addLayout(categories_layout)
         
-        # Grille des produits
-        self.products_grid = QGridLayout()
-        self.products_grid.setSpacing(12)
-        self.products_grid.setContentsMargins(10, 10, 10, 10)
-        left_layout.addLayout(self.products_grid)
-        left_layout.addStretch()
+        # Grille des produits dans une zone déroulante pour afficher tous les produits
+        self.products_container = QWidget()
+        self.products_grid = QGridLayout(self.products_container)
+        self.products_grid.setSpacing(10)
+        self.products_grid.setContentsMargins(8, 8, 8, 8)
+        self.products_container.setLayout(self.products_grid)
+
+        self.products_scroll = QScrollArea()
+        self.products_scroll.setWidgetResizable(True)
+        self.products_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.products_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.products_scroll.setWidget(self.products_container)
+        # Ensure scroll area expands to fill left pane
+        self.products_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.products_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Make the products scroll area expand to fill remaining vertical space
+        left_layout.addWidget(self.products_scroll, 1)
         
         main_layout.addLayout(left_layout, 2)
         
@@ -152,7 +178,7 @@ class POSScreen(QWidget):
         buttons_layout.setSpacing(10)
         
         clear_btn = QPushButton("🗑️ Vider")
-        clear_btn.setMinimumHeight(60)
+        clear_btn.setMinimumHeight(48)
         clear_btn.setFont(QFont("Segoe UI", 15, QFont.Bold))
         clear_btn.setStyleSheet(ModernStyles.modern_button_outline(ModernStyles.TEXT_SECONDARY))
         clear_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -160,7 +186,7 @@ class POSScreen(QWidget):
         buttons_layout.addWidget(clear_btn)
         
         payment_btn = QPushButton("💳 PAYER")
-        payment_btn.setMinimumHeight(60)
+        payment_btn.setMinimumHeight(48)
         payment_btn.setFont(QFont("Segoe UI", 17, QFont.Bold))
         payment_btn.setStyleSheet(ModernStyles.large_action_button(ModernStyles.PRIMARY))
         payment_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -181,9 +207,24 @@ class POSScreen(QWidget):
         self.load_products()
 
     def load_products(self):
-        # Vider la grille
+        # Vider la grille en supprimant proprement widgets et sous-layouts
         while self.products_grid.count():
-            self.products_grid.takeAt(0).widget().deleteLater()
+            item = self.products_grid.takeAt(0)
+            if not item:
+                continue
+            w = item.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+                continue
+            # si c'est un layout enfant, vider ses widgets
+            child_layout = item.layout()
+            if child_layout:
+                while child_layout.count():
+                    child = child_layout.takeAt(0)
+                    if child and child.widget():
+                        child.widget().setParent(None)
+                        child.widget().deleteLater()
         
         category = self.category_combo.currentText()
         
@@ -193,65 +234,106 @@ class POSScreen(QWidget):
             products = self.db.get_products_by_category(category)
         
         # responsive columns: adapt to window width (left pane ~66% of total)
-        left_width = max(600, int(self.width() * 0.66) - 40)
+        try:
+            # prefer the actual available width inside the scroll viewport
+            left_width = max(520, int(self.products_scroll.viewport().width()))
+        except Exception:
+            left_width = max(520, int(self.width() * 0.66) - 40)
         columns = 3
-        if left_width >= 1200:
+        if left_width >= 1400:
+            columns = 5
+        elif left_width >= 1200:
             columns = 4
         elif left_width < 900:
             columns = 2
 
-        # compute button size
-        spacing = self.products_grid.spacing() or 12
-        btn_width = max(160, (left_width - (columns - 1) * spacing) // columns - 12)
-        btn_height = int(btn_width * 0.56)
+        # compute button size (taller to accommodate multiline text)
+        spacing = self.products_grid.spacing() or 10
+        btn_width = max(130, (left_width - (columns - 1) * spacing) // columns - 12)
+        # slightly smaller height to fit more rows
+        btn_height = max(80, int(btn_width * 0.6))
 
         row, col = 0, 0
         for product in products:
             btn = QPushButton()
-            btn.setMinimumSize(btn_width, btn_height)
-            btn.setMaximumSize(btn_width + 40, btn_height + 30)
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
-            
+            # Force a uniform size so rows don't change height and items don't overlap
+            btn.setFixedSize(btn_width, btn_height)
+            btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
+
             # Vérifier le stock
-            stock = product.get('quantity', 0) or 0
-            stock_text = f"📦 {stock}" if stock > 0 else "⚠️ Épuisé"
-            
-            # nicer layout: name on top, price line, stock badge
-            btn.setText(f"{product['name']}\n\n{product['price']:.2f} {self.currency}    {stock_text}")
-            
-            # Style selon le stock
+            stock = _safe_get(product, 'quantity', 0) or 0
+            stock_display = f"📦 {stock}" if stock > 0 else "⚠️ Épuisé"
+
+            # Construire le texte et le style en une seule fois pour éviter les remplacements
+            # Construire le contenu avec labels enfants (évite le HTML brut)
+            name_lbl = QLabel(product['name'])
+            name_lbl.setFont(QFont("Segoe UI", 10, QFont.Bold))
+            name_lbl.setAlignment(Qt.AlignCenter)
+            name_lbl.setWordWrap(True)
+            name_lbl.setStyleSheet("background: transparent; margin:0px; padding:0px;")
+
+            price_lbl = QLabel(f"{product['price']:.2f} {self.currency}   {stock_display}")
+            price_lbl.setFont(QFont("Segoe UI", 9))
+            price_lbl.setAlignment(Qt.AlignCenter)
+            price_lbl.setStyleSheet(f"color: {ModernStyles.TEXT_PRIMARY}; background: transparent; margin:0px; padding:0px;")
+            price_lbl.setWordWrap(True)
+
+            # Clear any existing layout on the button and add our labels
+            inner_layout = QVBoxLayout()
+            inner_layout.setContentsMargins(4, 4, 4, 4)
+            inner_layout.setSpacing(2)
+            inner_layout.addStretch()
+            inner_layout.addWidget(name_lbl)
+            inner_layout.addWidget(price_lbl)
+            inner_layout.addStretch()
+            # Remove old layout if present
+            try:
+                old_layout = btn.layout()
+                if old_layout:
+                    while old_layout.count():
+                        child = old_layout.takeAt(0)
+                        if child and child.widget():
+                            child.widget().setParent(None)
+            except Exception:
+                pass
+            btn.setLayout(inner_layout)
+
+            btn.setFlat(True)
+            base_style = (
+                "QPushButton {"
+                f" background-color: {ModernStyles.CARD_BG};"
+                f" border: 1px solid {ModernStyles.BORDER};"
+                " border-radius: 12px;"
+                f" color: {ModernStyles.TEXT_PRIMARY};"
+                " padding: 8px;"
+                "}"
+            )
+
+            hover_pressed = (
+                "QPushButton:hover {"
+                f" background-color: {ModernStyles.PRIMARY};"
+                " color: white;"
+                f" border: 1px solid {ModernStyles.PRIMARY};"
+                "}"
+                "QPushButton:pressed {"
+                f" background-color: {ModernStyles._darken(ModernStyles.PRIMARY, 10)};"
+                "}"
+            )
+
             if stock == 0:
-                btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: #FFF5F5;
-                        border: 2px solid {ModernStyles.DANGER};
-                        border-radius: 10px;
-                        color: {ModernStyles.TEXT_SECONDARY};
-                        padding: 10px;
-                        text-align: center;
-                    }}
-                """)
+                stock_style = (
+                    "QPushButton {"
+                    " background-color: #FFF5F5;"
+                    f" border: 2px solid {ModernStyles.DANGER};"
+                    " border-radius: 10px;"
+                    f" color: {ModernStyles.TEXT_SECONDARY};"
+                    " padding: 10px;"
+                    "}"
+                )
                 btn.setEnabled(False)
+                btn.setStyleSheet(stock_style)
             else:
-                btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {ModernStyles.CARD_BG};
-                        border: 1px solid {ModernStyles.BORDER};
-                        border-radius: 12px;
-                        color: {ModernStyles.TEXT_PRIMARY};
-                        padding: 8px;
-                        text-align: center;
-                    }}
-                    QPushButton:hover {{
-                        background-color: {ModernStyles.PRIMARY};
-                        color: white;
-                        border: 1px solid {ModernStyles.PRIMARY};
-                    }}
-                    QPushButton:pressed {{
-                        background-color: {ModernStyles._darken(ModernStyles.PRIMARY, 10)};
-                    }}
-                """)
+                btn.setStyleSheet(base_style + hover_pressed)
                 btn.clicked.connect(lambda checked, p=product: self.add_to_cart(p))
             
             self.products_grid.addWidget(btn, row, col)
@@ -319,13 +401,13 @@ class POSScreen(QWidget):
             
             # Bouton Retour
             return_btn = QPushButton("✓ Retour" if not is_return else "✓✓ Retour")
-            return_btn.setFixedHeight(34)
-            return_btn.setStyleSheet(f"background-color: {'#10B981' if is_return else '#EF4444'}; color: white; border: none; border-radius: 6px; font-weight: bold; padding: 6px 10px;")
+            return_btn.setFixedHeight(28)
+            return_btn.setStyleSheet(f"background-color: {'#10B981' if is_return else '#EF4444'}; color: white; border: none; border-radius: 6px; font-weight: bold; padding: 4px 8px;")
             return_btn.clicked.connect(lambda checked, idx=i: self.toggle_return(idx))
             self.cart_table.setCellWidget(i, 4, return_btn)
 
             delete_btn = QPushButton("✕")
-            delete_btn.setFixedSize(36, 34)
+            delete_btn.setFixedSize(28, 28)
             delete_btn.setStyleSheet(ModernStyles.icon_button())
             delete_btn.clicked.connect(lambda checked, idx=i: self.remove_from_cart(idx))
             self.cart_table.setCellWidget(i, 5, delete_btn)
@@ -518,21 +600,21 @@ class PaymentDialog(QDialog):
         buttons_layout.setSpacing(10)
         
         cancel_btn = QPushButton("❌ Annuler")
-        cancel_btn.setFixedHeight(45)
+        cancel_btn.setFixedHeight(36)
         cancel_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
         cancel_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.TEXT_SECONDARY))
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
         
         partial_btn = QPushButton("⏸️ Paiement partiel")
-        partial_btn.setFixedHeight(45)
+        partial_btn.setFixedHeight(36)
         partial_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
         partial_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.INFO))
         partial_btn.clicked.connect(self.partial_payment)
         buttons_layout.addWidget(partial_btn)
         
         confirm_btn = QPushButton("✓ Confirmer le paiement")
-        confirm_btn.setFixedHeight(45)
+        confirm_btn.setFixedHeight(38)
         confirm_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
         confirm_btn.setStyleSheet(ModernStyles.large_action_button(ModernStyles.SUCCESS))
         confirm_btn.clicked.connect(self.accept)

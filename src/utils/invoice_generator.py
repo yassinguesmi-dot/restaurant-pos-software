@@ -59,6 +59,11 @@ class InvoiceGenerator:
             
             if not order:
                 raise ValueError(f"Commande {order_id} introuvable")
+            # convertir sqlite3.Row en dict pour utiliser .get()
+            try:
+                order = dict(order)
+            except Exception:
+                pass
             
             # Récupérer les items
             order_items = self.db.get_order_details(order_id)

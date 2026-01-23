@@ -1,8 +1,23 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, 
-                             QTableWidgetItem, QPushButton, QDialog, QMessageBox)
+                             QTableWidgetItem, QPushButton, QDialog, QMessageBox,
+                             QLineEdit, QDateEdit, QComboBox, QSizePolicy, QFrame)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from src.utils.invoice_generator import InvoiceGenerator
+from src.utils.styles import ModernStyles
+
+def _safe_get(obj, key, default=None):
+    try:
+        if obj is None:
+            return default
+        if hasattr(obj, 'get'):
+            return obj.get(key, default)
+        if hasattr(obj, 'keys') and key in obj.keys():
+            v = obj[key]
+            return default if v is None else v
+        return getattr(obj, key, default)
+    except Exception:
+        return default
 
 class OrdersScreen(QWidget):
     def __init__(self, db):
@@ -21,52 +36,70 @@ class OrdersScreen(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)
-        
-        # Titre
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        # Header card with title and filters
+        header = QFrame()
+        header.setStyleSheet(ModernStyles.card_style())
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(12, 12, 12, 12)
+        header_layout.setSpacing(10)
+
         title = QLabel("Historique des Commandes")
-        title.setFont(QFont("Arial", 16, QFont.Bold))
-        title.setStyleSheet("color: #2C2C2C;")
-        layout.addWidget(title)
-        
-        # Boutons d'action
-        buttons_layout = QHBoxLayout()
-        
-        refresh_btn = QPushButton("Rafraîchir")
-        refresh_btn.setFixedHeight(40)
-        refresh_btn.setFont(QFont("Arial", 11, QFont.Bold))
-        refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #C8A882;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-        """)
+        title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        title.setStyleSheet(ModernStyles.modern_label('large'))
+        header_layout.addWidget(title)
+
+        # Spacer between title and filters
+        header_layout.addStretch()
+
+        # Search / filter controls
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Rechercher par N° commande, facture ou client...")
+        self.search_input.setFixedWidth(360)
+        self.search_input.setStyleSheet(ModernStyles.modern_input())
+        self.search_input.returnPressed.connect(self.load_orders)
+        header_layout.addWidget(self.search_input)
+
+        self.date_filter = QDateEdit()
+        self.date_filter.setCalendarPopup(True)
+        self.date_filter.setStyleSheet(ModernStyles.modern_input())
+        self.date_filter.setDisplayFormat("yyyy-MM-dd")
+        header_layout.addWidget(self.date_filter)
+
+        refresh_btn = QPushButton("🔄")
+        refresh_btn.setToolTip("Rafraîchir")
+        refresh_btn.setFixedSize(44, 44)
+        refresh_btn.setStyleSheet(ModernStyles.icon_button())
         refresh_btn.clicked.connect(self.load_orders)
-        buttons_layout.addWidget(refresh_btn)
-        
-        buttons_layout.addStretch()
-        layout.addLayout(buttons_layout)
-        
-        # Tableau des commandes
+        header_layout.addWidget(refresh_btn)
+
+        layout.addWidget(header)
+
+        # Table card
+        table_card = QFrame()
+        table_card.setStyleSheet(ModernStyles.card_style())
+        table_layout = QVBoxLayout(table_card)
+        table_layout.setContentsMargins(8, 8, 8, 8)
+
         self.orders_table = QTableWidget()
         self.orders_table.setColumnCount(7)
         self.orders_table.setHorizontalHeaderLabels(["N° Commande", "N° Facture", "Date", "Montant", "Statut", "Paiement", "Actions"])
-        self.orders_table.setStyleSheet("""
-            QTableWidget {
-                background-color: white;
-                gridline-color: #DDD;
-            }
-            QHeaderView::section {
-                background-color: #2C2C2C;
-                color: white;
-                padding: 5px;
-                font-weight: bold;
-            }
-        """)
-        layout.addWidget(self.orders_table)
-        
+        self.orders_table.setStyleSheet(ModernStyles.modern_table())
+        self.orders_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.orders_table.setMinimumHeight(320)
+        # sensible default column widths
+        self.orders_table.setColumnWidth(0, 180)
+        self.orders_table.setColumnWidth(1, 120)
+        self.orders_table.setColumnWidth(2, 110)
+        self.orders_table.setColumnWidth(3, 120)
+        self.orders_table.setColumnWidth(4, 100)
+        self.orders_table.setColumnWidth(5, 90)
+
+        table_layout.addWidget(self.orders_table)
+        layout.addWidget(table_card)
+
         self.load_orders()
 
     def load_orders(self):
@@ -88,12 +121,12 @@ class OrdersScreen(QWidget):
                         print(f"DEBUG: Clés disponibles: {list(order.keys())}")
                     
                     # Extraire les valeurs avec des valeurs par défaut
-                    order_number = str(order.get('order_number', f"Cmd {order.get('id', i)}"))
-                    invoice_num = str(order.get('invoice_number', '-'))
-                    created_at = str(order.get('created_at', '-'))[:10]
-                    total_amount = float(order.get('total_amount', 0))
-                    status = str(order.get('status', 'inconnu'))
-                    payment_method = str(order.get('payment_method', '-'))
+                    order_number = str(_safe_get(order, 'order_number', f"Cmd {_safe_get(order,'id', i)}"))
+                    invoice_num = str(_safe_get(order, 'invoice_number', '-'))
+                    created_at = str(_safe_get(order, 'created_at', '-'))[:10]
+                    total_amount = float(_safe_get(order, 'total_amount', 0) or 0)
+                    status = str(_safe_get(order, 'status', 'inconnu'))
+                    payment_method = str(_safe_get(order, 'payment_method', '-'))
                     
                     self.orders_table.setItem(i, 0, QTableWidgetItem(order_number))
                     self.orders_table.setItem(i, 1, QTableWidgetItem(invoice_num))
@@ -106,15 +139,15 @@ class OrdersScreen(QWidget):
                     actions_layout = QHBoxLayout()
                     
                     details_btn = QPushButton("Voir")
-                    details_btn.setFixedWidth(60)
-                    details_btn.setStyleSheet("background-color: #2196F3; color: white; border-radius: 4px;")
+                    details_btn.setFixedWidth(64)
+                    details_btn.setStyleSheet(ModernStyles.table_button("edit"))
                     details_btn.clicked.connect(lambda checked, o=order: self.show_order_details(o))
                     actions_layout.addWidget(details_btn)
                     
                     if status.lower() == 'payé':
                         invoice_btn = QPushButton("Facture")
-                        invoice_btn.setFixedWidth(70)
-                        invoice_btn.setStyleSheet("background-color: #4CAF50; color: white; border-radius: 4px;")
+                        invoice_btn.setFixedWidth(72)
+                        invoice_btn.setStyleSheet(ModernStyles.table_button("add"))
                         invoice_btn.clicked.connect(lambda checked, o=order: self.generate_invoice(o))
                         actions_layout.addWidget(invoice_btn)
                     
@@ -141,7 +174,8 @@ class OrdersScreen(QWidget):
     def generate_invoice(self, order):
         try:
             invoice_gen = InvoiceGenerator(self.db)
-            pdf_path = invoice_gen.generate_invoice(order.get('id', -1))
+            order_id = _safe_get(order, 'id', -1)
+            pdf_path = invoice_gen.generate_invoice(order_id)
             QMessageBox.information(
                 self, 
                 "Succès", 
@@ -149,7 +183,7 @@ class OrdersScreen(QWidget):
                 QMessageBox.Yes | QMessageBox.No
             )
             # Ouvrir le PDF
-            invoice_gen.print_invoice(order.get('id', -1))
+            invoice_gen.print_invoice(order_id)
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Erreur lors de la génération de la facture:\n{str(e)}")
 
@@ -164,7 +198,7 @@ class OrderDetailsDialog(QDialog):
 
     def init_ui(self):
         try:
-            order_number = str(self.order.get('order_number', f"Cmd {self.order.get('id', '?')}"))
+            order_number = str(_safe_get(self.order, 'order_number', f"Cmd {_safe_get(self.order,'id','?')}"))
             self.setWindowTitle(f"Détails de la commande {order_number}")
             self.setGeometry(300, 200, 600, 400)
             
@@ -173,9 +207,9 @@ class OrderDetailsDialog(QDialog):
             # Info commande
             info_layout = QHBoxLayout()
             
-            order_num = str(self.order.get('order_number', 'N/A'))
-            status = str(self.order.get('status', 'inconnu'))
-            total = float(self.order.get('total_amount', 0))
+            order_num = str(_safe_get(self.order, 'order_number', 'N/A'))
+            status = str(_safe_get(self.order, 'status', 'inconnu'))
+            total = float(_safe_get(self.order, 'total_amount', 0) or 0)
             
             info_layout.addWidget(QLabel(f"N°: {order_num}"))
             info_layout.addWidget(QLabel(f"Statut: {status}"))
@@ -187,15 +221,15 @@ class OrderDetailsDialog(QDialog):
             self.details_table.setColumnCount(4)
             self.details_table.setHorizontalHeaderLabels(["Article", "Quantité", "Prix U.", "Total"])
             
-            items = self.db.get_order_details(self.order.get('id', -1))
+            items = self.db.get_order_details(_safe_get(self.order, 'id', -1))
             self.details_table.setRowCount(len(items))
             
             for i, item in enumerate(items):
                 try:
-                    name = str(item.get('name', 'N/A'))
-                    qty = int(item.get('quantity', 0))
-                    unit_price = float(item.get('unit_price', 0))
-                    total_price = float(item.get('total_price', 0))
+                    name = str(_safe_get(item, 'name', 'N/A'))
+                    qty = int(_safe_get(item, 'quantity', 0) or 0)
+                    unit_price = float(_safe_get(item, 'unit_price', 0) or 0)
+                    total_price = float(_safe_get(item, 'total_price', 0) or 0)
                     
                     self.details_table.setItem(i, 0, QTableWidgetItem(name))
                     self.details_table.setItem(i, 1, QTableWidgetItem(str(qty)))
@@ -210,20 +244,20 @@ class OrderDetailsDialog(QDialog):
             # Boutons
             buttons_layout = QHBoxLayout()
             
-            status_check = str(self.order.get('status', 'inconnu')).lower()
+            status_check = str(_safe_get(self.order, 'status', 'inconnu')).lower()
             if status_check == 'payé' or status_check == 'paye':
                 invoice_btn = QPushButton("Générer Facture PDF")
-                invoice_btn.setStyleSheet("background-color: #4CAF50; color: white; border-radius: 4px;")
+                invoice_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=True))
                 invoice_btn.clicked.connect(self.generate_invoice)
                 buttons_layout.addWidget(invoice_btn)
-                
+
                 print_btn = QPushButton("Imprimer")
-                print_btn.setStyleSheet("background-color: #2196F3; color: white; border-radius: 4px;")
+                print_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=False))
                 print_btn.clicked.connect(self.print_invoice)
                 buttons_layout.addWidget(print_btn)
             
             close_btn = QPushButton("Fermer")
-            close_btn.setStyleSheet("background-color: #666; color: white; border-radius: 4px;")
+            close_btn.setStyleSheet(ModernStyles.dialog_button(is_primary=False))
             close_btn.clicked.connect(self.accept)
             buttons_layout.addWidget(close_btn)
             
@@ -252,7 +286,8 @@ class OrderDetailsDialog(QDialog):
     def print_invoice(self):
         try:
             invoice_gen = InvoiceGenerator(self.db)
-            invoice_gen.print_invoice(self.order.get('id', -1))
+            order_id = _safe_get(self.order, 'id', -1)
+            invoice_gen.print_invoice(order_id)
             QMessageBox.information(self, "Succès", "Facture envoyée à l'impression!")
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Erreur lors de l'impression:\n{str(e)}")

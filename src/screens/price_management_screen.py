@@ -5,6 +5,20 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from src.utils.styles import ModernStyles
 
+
+def _safe_get(obj, key, default=None):
+    try:
+        if obj is None:
+            return default
+        if hasattr(obj, 'get'):
+            return obj.get(key, default)
+        if hasattr(obj, 'keys') and key in obj.keys():
+            v = obj[key]
+            return default if v is None else v
+        return getattr(obj, key, default)
+    except Exception:
+        return default
+
 class PriceManagementScreen(QWidget):
     def __init__(self, db):
         super().__init__()
@@ -42,14 +56,14 @@ class PriceManagementScreen(QWidget):
         buttons_layout = QHBoxLayout()
         
         add_btn = QPushButton("+ Ajouter un Produit")
-        add_btn.setMinimumHeight(44)
+        add_btn.setMinimumHeight(36)
         add_btn.setFont(QFont("Arial", 11, QFont.Bold))
         add_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.SUCCESS))
         add_btn.clicked.connect(self.add_product)
         buttons_layout.addWidget(add_btn)
         
         refresh_btn = QPushButton("🔄 Rafraîchir")
-        refresh_btn.setMinimumHeight(44)
+        refresh_btn.setMinimumHeight(36)
         refresh_btn.setFont(QFont("Arial", 11))
         refresh_btn.setStyleSheet(ModernStyles.modern_button_outline(ModernStyles.INFO))
         refresh_btn.clicked.connect(self.load_all_products)
@@ -64,6 +78,9 @@ class PriceManagementScreen(QWidget):
         self.products_table.setHorizontalHeaderLabels(["ID", "Nom du Produit", "Prix (dt)", "Catégorie", "Stock", "Stock Min", "Actions"])
         self.products_table.setStyleSheet(ModernStyles.modern_table())
         self.products_table.horizontalHeader().setStretchLastSection(False)
+        self.products_table.horizontalHeader().setMinimumHeight(48)
+        self.products_table.verticalHeader().setVisible(False)
+        self.products_table.setAlternatingRowColors(True)
         self.products_table.verticalHeader().setDefaultSectionSize(48)
         # sensible column widths
         self.products_table.setColumnWidth(0, 60)
@@ -105,6 +122,9 @@ class PriceManagementScreen(QWidget):
         self.category_table.setColumnCount(7)
         self.category_table.setHorizontalHeaderLabels(["ID", "Nom du Produit", "Prix (dt)", "Catégorie", "Stock", "Stock Min", "Actions"])
         self.category_table.setStyleSheet(ModernStyles.modern_table())
+        self.category_table.horizontalHeader().setMinimumHeight(48)
+        self.category_table.verticalHeader().setVisible(False)
+        self.category_table.setAlternatingRowColors(True)
         self.category_table.verticalHeader().setDefaultSectionSize(48)
         layout.addWidget(self.category_table)
 
@@ -116,8 +136,8 @@ class PriceManagementScreen(QWidget):
         self.products_table.setRowCount(len(products))
         
         for i, product in enumerate(products):
-            stock = product.get('quantity', 0) or 0
-            min_stock = product.get('min_quantity', 0) or 0
+            stock = _safe_get(product, 'quantity', 0) or 0
+            min_stock = _safe_get(product, 'min_quantity', 0) or 0
             
             self.products_table.setItem(i, 0, QTableWidgetItem(str(product['id'])))
             self.products_table.setItem(i, 1, QTableWidgetItem(product['name']))
@@ -135,13 +155,17 @@ class PriceManagementScreen(QWidget):
             # Boutons d'action
             actions_layout = QHBoxLayout()
             
-            edit_btn = QPushButton("✏️ Éditer")
-            edit_btn.setFixedWidth(100)
+            edit_btn = QPushButton("✏️")
+            edit_btn.setFixedWidth(60)
+            edit_btn.setFixedHeight(28)
+            edit_btn.setToolTip("Éditer")
             edit_btn.setStyleSheet(ModernStyles.table_button("edit"))
             edit_btn.clicked.connect(lambda checked, p=product: self.edit_product(p))
             
-            delete_btn = QPushButton("🗑️ Supprimer")
-            delete_btn.setFixedWidth(110)
+            delete_btn = QPushButton("🗑️")
+            delete_btn.setFixedWidth(60)
+            delete_btn.setFixedHeight(28)
+            delete_btn.setToolTip("Supprimer")
             delete_btn.setStyleSheet(ModernStyles.table_button("delete"))
             delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
             
@@ -159,8 +183,8 @@ class PriceManagementScreen(QWidget):
         self.category_table.setRowCount(len(products))
         
         for i, product in enumerate(products):
-            stock = product.get('quantity', 0) or 0
-            min_stock = product.get('min_quantity', 0) or 0
+            stock = _safe_get(product, 'quantity', 0) or 0
+            min_stock = _safe_get(product, 'min_quantity', 0) or 0
             
             self.category_table.setItem(i, 0, QTableWidgetItem(str(product['id'])))
             self.category_table.setItem(i, 1, QTableWidgetItem(product['name']))
@@ -178,13 +202,17 @@ class PriceManagementScreen(QWidget):
             # Boutons d'action
             actions_layout = QHBoxLayout()
             
-            edit_btn = QPushButton("✏️ Éditer")
-            edit_btn.setFixedWidth(100)
+            edit_btn = QPushButton("✏️")
+            edit_btn.setFixedWidth(80)
+            edit_btn.setFixedHeight(34)
+            edit_btn.setToolTip("Éditer")
             edit_btn.setStyleSheet(ModernStyles.table_button("edit"))
             edit_btn.clicked.connect(lambda checked, p=product: self.edit_product(p))
-            
-            delete_btn = QPushButton("🗑️ Supprimer")
-            delete_btn.setFixedWidth(110)
+
+            delete_btn = QPushButton("🗑️")
+            delete_btn.setFixedWidth(80)
+            delete_btn.setFixedHeight(34)
+            delete_btn.setToolTip("Supprimer")
             delete_btn.setStyleSheet(ModernStyles.table_button("delete"))
             delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
             
@@ -303,7 +331,7 @@ class ProductPriceDialog(QDialog):
             }
         """)
         if self.product:
-            self.stock_input.setValue(self.product.get('quantity', 0) or 0)
+            self.stock_input.setValue(_safe_get(self.product, 'quantity', 0) or 0)
         layout.addWidget(self.stock_input)
         
         # Stock minimum (alerte)
@@ -319,7 +347,7 @@ class ProductPriceDialog(QDialog):
             }
         """)
         if self.product:
-            self.min_stock_input.setValue(self.product.get('min_quantity', 0) or 0)
+            self.min_stock_input.setValue(_safe_get(self.product, 'min_quantity', 0) or 0)
         layout.addWidget(self.min_stock_input)
         
         layout.addStretch()

@@ -574,7 +574,7 @@ class Database:
             WHERE quantity <= min_quantity AND min_quantity > 0
             ORDER BY quantity ASC
         ''')
-        return cursor.fetchall()
+        return [dict(row) for row in cursor.fetchall()]
 
     # ========== GESTION DES TABLES ==========
     def get_all_tables(self):

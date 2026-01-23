@@ -118,30 +118,33 @@ class ModernStyles:
         if color is None:
             color = ModernStyles.PRIMARY
         
-        padding = "12px 24px" if size == "normal" else "8px 16px" if size == "small" else "14px 28px"
-        height = "40px" if size == "normal" else "32px" if size == "small" else "48px"
-        
+        padding = "12px 22px" if size == "normal" else "8px 14px" if size == "small" else "14px 26px"
+        height = "44px" if size == "normal" else "36px" if size == "small" else "52px"
+
+        # Subtle gradient for depth and stronger hover/pressed states
+        grad = f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {ModernStyles._lighten(color, 6)}, stop:1 {color})"
+
         return f"""
             QPushButton {{
-                background-color: {color};
+                background: {grad};
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: {padding};
-                font-weight: 600;
-                font-size: 12px;
-                letter-spacing: 0.5px;
+                font-weight: 700;
+                font-size: 13px;
+                letter-spacing: 0.4px;
                 min-height: {height};
             }}
             QPushButton:hover {{
-                background-color: {ModernStyles._lighten(color, 10)};
-                border: 1px solid {ModernStyles._lighten(color, 20)};
+                background: {ModernStyles._lighten(color, 12)};
+                border: 1px solid {ModernStyles._lighten(color, 18)};
             }}
             QPushButton:pressed {{
-                background-color: {ModernStyles._darken(color, 10)};
+                background: {ModernStyles._darken(color, 12)};
             }}
             QPushButton:disabled {{
-                background-color: #D1D5DB;
+                background-color: #E5E7EB;
                 color: #9CA3AF;
             }}
         """
@@ -157,19 +160,20 @@ class ModernStyles:
                 background-color: transparent;
                 color: {color};
                 border: 2px solid {color};
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: 600;
-                font-size: 12px;
+                border-radius: 8px;
+                padding: 10px 18px;
+                font-weight: 700;
+                font-size: 13px;
             }}
             QPushButton:hover {{
-                background-color: {ModernStyles._lighten(color, 95)};
+                background-color: {ModernStyles._lighten(color, 92)};
+                border: 2px solid {ModernStyles._lighten(color, 20)};
             }}
             QPushButton:pressed {{
-                background-color: {ModernStyles._lighten(color, 85)};
+                background-color: {ModernStyles._lighten(color, 84)};
             }}
             QPushButton:disabled {{
-                border-color: #D1D5DB;
+                border-color: #E5E7EB;
                 color: #9CA3AF;
             }}
         """
@@ -190,12 +194,13 @@ class ModernStyles:
             }}
             QPushButton:hover {{
                 background-color: #374151;
-                border-left: 3px solid {ModernStyles.PRIMARY};
+                border-left: 4px solid {ModernStyles.PRIMARY};
+                padding-left: 12px;
             }}
             QPushButton:pressed {{
                 background-color: {ModernStyles.PRIMARY};
                 color: white;
-                border-left: 3px solid {ModernStyles.PRIMARY};
+                border-left: 4px solid {ModernStyles.PRIMARY};
             }}
             QPushButton:disabled {{
                 background-color: #4B5563;
@@ -220,14 +225,14 @@ class ModernStyles:
                 background-color: {color};
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-weight: 500;
-                font-size: 11px;
-                min-width: 60px;
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-weight: 600;
+                font-size: 12px;
+                min-width: 48px;
             }}
             QPushButton:hover {{
-                background-color: {ModernStyles._lighten(color, 10)};
+                background-color: {ModernStyles._lighten(color, 8)};
             }}
             QPushButton:pressed {{
                 background-color: {ModernStyles._darken(color, 10)};
@@ -237,14 +242,17 @@ class ModernStyles:
     @staticmethod
     def icon_button(size="normal"):
         """Icon-only button style"""
+        size_px = 36 if size == "normal" else 28
         return f"""
             QPushButton {{
                 background-color: {ModernStyles.LIGHT_BG};
                 color: {ModernStyles.TEXT_PRIMARY};
                 border: 1px solid {ModernStyles.BORDER};
-                border-radius: 6px;
-                padding: 8px;
-                font-weight: 500;
+                border-radius: {int(size_px/2)}px;
+                min-width: {size_px}px;
+                min-height: {size_px}px;
+                padding: 4px;
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {ModernStyles.BORDER};
@@ -264,22 +272,22 @@ class ModernStyles:
         
         return f"""
             QPushButton {{
-                background-color: {color};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {ModernStyles._lighten(color,6)}, stop:1 {color});
                 color: white;
                 border: none;
-                border-radius: 8px;
-                padding: 14px 28px;
-                font-weight: 700;
-                font-size: 14px;
-                letter-spacing: 0.5px;
-                min-height: 48px;
+                border-radius: 10px;
+                padding: 12px 26px;
+                font-weight: 800;
+                font-size: 15px;
+                letter-spacing: 0.6px;
+                min-height: 52px;
             }}
             QPushButton:hover {{
-                background-color: {ModernStyles._lighten(color, 10)};
+                background-color: {ModernStyles._lighten(color, 12)};
                 border: none;
             }}
             QPushButton:pressed {{
-                background-color: {ModernStyles._darken(color, 15)};
+                background-color: {ModernStyles._darken(color, 18)};
             }}
         """
     

@@ -203,7 +203,7 @@ adb install bin/cafe216pos-1.0-debug.apk
 name: Build APK
 
 on:
-  push:
+  push:![alt text](image.png)
     branches: [ main ]
   workflow_dispatch:
 

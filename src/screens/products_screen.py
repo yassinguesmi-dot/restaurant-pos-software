@@ -34,14 +34,14 @@ class ProductsScreen(QWidget):
         buttons_layout = QHBoxLayout()
         
         add_btn = QPushButton("➕ Ajouter un produit")
-        add_btn.setMinimumHeight(44)
+        add_btn.setMinimumHeight(36)
         add_btn.setFont(QFont("Arial", 11, QFont.Bold))
         add_btn.setStyleSheet(ModernStyles.modern_button(ModernStyles.SUCCESS))
         add_btn.clicked.connect(self.add_product)
         buttons_layout.addWidget(add_btn)
         
         refresh_btn = QPushButton("🔄 Rafraîchir")
-        refresh_btn.setMinimumHeight(44)
+        refresh_btn.setMinimumHeight(36)
         refresh_btn.setFont(QFont("Arial", 11))
         refresh_btn.setStyleSheet(ModernStyles.modern_button_outline(ModernStyles.INFO))
         refresh_btn.clicked.connect(self.load_products)
@@ -61,6 +61,9 @@ class ProductsScreen(QWidget):
         self.products_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.products_table.setSelectionMode(QTableWidget.SingleSelection)
         # Improve table spacing and column sizes for readability
+        self.products_table.horizontalHeader().setMinimumHeight(48)
+        self.products_table.verticalHeader().setVisible(False)
+        self.products_table.setAlternatingRowColors(True)
         self.products_table.verticalHeader().setDefaultSectionSize(52)
         self.products_table.setColumnWidth(0, 60)
         self.products_table.setColumnWidth(1, 320)
@@ -83,13 +86,17 @@ class ProductsScreen(QWidget):
             # Boutons d'action
             actions_layout = QHBoxLayout()
             
-            edit_btn = QPushButton("✏️ Éditer")
-            edit_btn.setFixedWidth(80)
+            edit_btn = QPushButton("✏️")
+            edit_btn.setFixedWidth(60)
+            edit_btn.setFixedHeight(28)
+            edit_btn.setToolTip("Éditer")
             edit_btn.setStyleSheet(ModernStyles.table_button("edit"))
             edit_btn.clicked.connect(lambda checked, p=product: self.edit_product(p))
-            
-            delete_btn = QPushButton("🗑️ Suppr.")
-            delete_btn.setFixedWidth(80)
+
+            delete_btn = QPushButton("🗑️")
+            delete_btn.setFixedWidth(60)
+            delete_btn.setFixedHeight(28)
+            delete_btn.setToolTip("Supprimer")
             delete_btn.setStyleSheet(ModernStyles.table_button("delete"))
             delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
             

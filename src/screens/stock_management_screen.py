@@ -6,6 +6,20 @@ from PyQt5.QtGui import QFont, QColor
 from datetime import datetime
 from src.utils.styles import ModernStyles
 
+
+def _safe_get(obj, key, default=None):
+    try:
+        if obj is None:
+            return default
+        if hasattr(obj, 'get'):
+            return obj.get(key, default)
+        if hasattr(obj, 'keys') and key in obj.keys():
+            v = obj[key]
+            return default if v is None else v
+        return getattr(obj, key, default)
+    except Exception:
+        return default
+
 class StockManagementScreen(QWidget):
     def __init__(self, db):
         super().__init__()
@@ -141,8 +155,8 @@ class StockManagementScreen(QWidget):
         self.stock_table.setRowCount(len(products))
         
         for i, product in enumerate(products):
-            stock = product.get('quantity', 0) or 0
-            min_stock = product.get('min_quantity', 0) or 0
+            stock = _safe_get(product, 'quantity', 0) or 0
+            min_stock = _safe_get(product, 'min_quantity', 0) or 0
             
             self.stock_table.setItem(i, 0, QTableWidgetItem(str(product['id'])))
             self.stock_table.setItem(i, 1, QTableWidgetItem(product['name']))
@@ -182,8 +196,8 @@ class StockManagementScreen(QWidget):
         self.alerts_table.setRowCount(len(low_stock_products))
         
         for i, product in enumerate(low_stock_products):
-            stock = product.get('quantity', 0) or 0
-            min_stock = product.get('min_quantity', 0) or 0
+            stock = _safe_get(product, 'quantity', 0) or 0
+            min_stock = _safe_get(product, 'min_quantity', 0) or 0
             
             self.alerts_table.setItem(i, 0, QTableWidgetItem(str(product['id'])))
             self.alerts_table.setItem(i, 1, QTableWidgetItem(product['name']))
@@ -266,7 +280,7 @@ class AddStockDialog(QDialog):
         
         if self.product:
             layout.addWidget(QLabel(f"Produit: {self.product['name']}"))
-            layout.addWidget(QLabel(f"Stock actuel: {self.product.get('quantity', 0) or 0}"))
+            layout.addWidget(QLabel(f"Stock actuel: {_safe_get(self.product, 'quantity', 0) or 0}"))
         
         layout.addWidget(QLabel("Sélectionner le produit:"))
         self.product_combo = QComboBox()
@@ -331,18 +345,18 @@ class AdjustStockDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         
         layout.addWidget(QLabel(f"Produit: {self.product['name']}"))
-        layout.addWidget(QLabel(f"Stock actuel: {self.product.get('quantity', 0) or 0}"))
+        layout.addWidget(QLabel(f"Stock actuel: {_safe_get(self.product, 'quantity', 0) or 0}"))
         
         layout.addWidget(QLabel("Nouveau stock:"))
         self.quantity_input = QSpinBox()
         self.quantity_input.setRange(0, 10000)
-        self.quantity_input.setValue(self.product.get('quantity', 0) or 0)
+        self.quantity_input.setValue(_safe_get(self.product, 'quantity', 0) or 0)
         layout.addWidget(self.quantity_input)
         
         layout.addWidget(QLabel("Stock minimum:"))
         self.min_quantity_input = QSpinBox()
         self.min_quantity_input.setRange(0, 10000)
-        self.min_quantity_input.setValue(self.product.get('min_quantity', 0) or 0)
+        self.min_quantity_input.setValue(_safe_get(self.product, 'min_quantity', 0) or 0)
         layout.addWidget(self.min_quantity_input)
         
         buttons_layout = QHBoxLayout()
